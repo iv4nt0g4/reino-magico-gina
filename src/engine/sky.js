@@ -241,6 +241,13 @@ export class Sky {
     }
   }
 
+  // Distancia de visión en bloques (niebla y nubes se ajustan a ella).
+  setViewDistance(viewDistance) {
+    this.viewDistance = viewDistance;
+    this.cloudUniforms.uFadeNear.value = viewDistance * 0.45;
+    this.cloudUniforms.uFadeFar.value = viewDistance * 0.95;
+  }
+
   // Elevación del sol: 1 a mediodía, 0 en el horizonte, -1 a medianoche.
   get sunElevation() {
     return Math.sin(this.time * Math.PI * 2);

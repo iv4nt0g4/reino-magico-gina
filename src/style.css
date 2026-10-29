@@ -338,3 +338,29 @@ kbd {
 #new-world-no {
   background: #e7849a;
 }
+
+/* ---------- Tablet ---------- */
+html,
+body {
+  touch-action: none; /* sin zoom ni desplazamiento con gestos */
+  overscroll-behavior: none;
+}
+
+/* Plan B sin captura del ratón: el cursor se oculta mientras se juega. */
+body.mouse-hidden,
+body.mouse-hidden * {
+  cursor: none !important;
+}
+
+#fullscreen {
+  margin-left: 10px;
+  width: 52px;
+  height: 52px;
+  font-size: 26px;
+  vertical-align: middle;
+  border: none;
+  border-radius: 50%;
+  color: #8a5fd6;
+  background: #f1e3ff;
+  cursor: pointer;
+}

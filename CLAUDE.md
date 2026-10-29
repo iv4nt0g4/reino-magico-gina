@@ -15,8 +15,9 @@ Trabajamos **por fases**. En cada sesión te indicaré qué fase toca. No avance
 - **Vite + JavaScript (ES modules) + Three.js.** Sin frameworks de UI; el HUD y los menús con HTML/CSS por encima del canvas.
 - Ruido para terreno: `simplex-noise` (o implementación propia), con semilla.
 - Guardado: **IndexedDB** (mundo modificado por chunks + estado del jugador). Autoguardado cada 30 s y al salir.
-- Objetivo de rendimiento: 60 fps en un portátil normal con distancia de renderizado de 6–8 chunks.
-- Debe funcionar en Chrome/Edge de escritorio. Los controles táctiles para tablet llegan en una fase posterior.
+- **Dispositivo principal: tablet Android con teclado y ratón físicos** (Chrome). También debe funcionar en Chrome/Edge de escritorio.
+- Objetivo de rendimiento: juego fluido en la tablet. La calidad (resolución interna y distancia de renderizado, de 3 a 7 chunks) se ajusta sola según los fps; en un portátil normal, 60 fps con 6–8 chunks.
+- Si el navegador no permite capturar el ratón (pointer lock), se juega igual: se mira moviendo el ratón y con las flechas del teclado.
 
 ## Motor (lo más parecido posible al original)
 - **Mundo por chunks** de 16×16×256 (o 16×16 en horizontal con altura razonable, p. ej. 128). Carga y descarga según la posición del jugador.
@@ -89,4 +90,4 @@ src/
 - **Fase 7 — Seres vivos:** animalitos con IA sencilla, compañero que sigue a Gina.
 - **Fase 8 — Aventura suave:** inventario completo, crafteo 3×3 con libro de recetas ilustrado, recogida de materiales.
 - **Fase 9 — Personalización:** pantalla de título, temas de color, mensajes, carteles, sorpresa de cumpleaños, música.
-- **Fase 10 — Pulido:** menú de ajustes (distancia de renderizado, sensibilidad, volumen), controles táctiles para tablet, optimización, corrección de errores.
+- **Fase 10 — Pulido:** menú de ajustes (distancia de renderizado, sensibilidad, volumen), controles táctiles opcionales (la tablet se usa con teclado y ratón), optimización, corrección de errores.

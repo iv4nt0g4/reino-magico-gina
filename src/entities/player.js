@@ -40,6 +40,12 @@ export class Player {
     this.flying = false;
   }
 
+  // Girar un ángulo dado (en radianes), por ejemplo con las flechas.
+  turn(dYaw, dPitch) {
+    this.yaw += dYaw;
+    this.pitch = Math.max(-Math.PI / 2 + 0.001, Math.min(Math.PI / 2 - 0.001, this.pitch + dPitch));
+  }
+
   look(dx, dy) {
     const s = this.settings.mouseSensitivity;
     this.yaw -= dx * s;

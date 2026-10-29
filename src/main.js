@@ -2,7 +2,8 @@
 
 import './style.css';
 import { SETTINGS } from './config/settings.js';
-import { createRenderer } from './engine/renderer.js';
+import { createRenderer, cameraFar } from './engine/renderer.js';
+import { QualityManager } from './engine/quality.js';
 import { createBlockMaterials } from './blocks/material.js';
 import { ChunkManager } from './engine/chunks.js';
 import { Input } from './engine/input.js';
@@ -54,6 +55,19 @@ const hotbar = new Hotbar();
 const catalog = new Catalog(hotbar);
 const interaction = new Interaction({ scene, camera, world, water, player, hotbar, sounds, settings: SETTINGS });
 
+// Calidad automática (resolución y distancia de visión según los fps).
+const quality = new QualityManager(renderer, (distance) => {
+  world.setRenderDistance(distance);
+  const viewDistance = (distance + 1) * 16;
+  camera.far = cameraFar(viewDistance);
+  camera.updateProjectionMatrix();
+  sky.setViewDistance(viewDistance);
+});
+quality.apply();
+
+const ARROW_TURN_SPEED = 2.2; // radianes por segundo al girar con las flechas
+const ARROW_TILT_SPEED = 1.6;
+
 if (meta) {
   hotbar.restore(meta.hotbar, meta.selected);
   sky.time = meta.time;
@@ -82,7 +96,10 @@ function setState(next) {
   const previous = state;
   state = next;
   hud.setState(next);
-  if (next !== 'playing') interaction.hideOutline();
+  if (next !== 'playing') {
+    interaction.hideOutline();
+    quality.reset();
+  }
   if (next === 'paused' && previous === 'playing') saveGame();
 }
 
@@ -138,6 +155,22 @@ input.onOpenCatalog = () => {
   input.releaseLock();
   catalog.open();
 };
+const fullscreenButton = document.getElementById('fullscreen');
+fullscreenButton.hidden = !document.fullscreenEnabled;
+fullscreenButton.addEventListener('click', toggleFullscreen);
+
+// Pantalla completa (en tablet, además, en horizontal si se puede).
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+    return;
+  }
+  document.documentElement
+    .requestFullscreen({ navigationUI: 'hide' })
+    .then(() => screen.orientation?.lock?.('landscape'))
+    .catch(() => {});
+}
+
 input.onLockChange = (locked) => {
   if (state === 'loading') return;
   if (locked) setState('playing');
@@ -234,6 +267,9 @@ function frame(now) {
     if (state === 'playing') {
       const mouse = input.consumeMouse();
       player.look(mouse.x, mouse.y);
+      const arrows = input.arrows();
+      player.turn(arrows.turn * ARROW_TURN_SPEED * dt, arrows.tilt * ARROW_TILT_SPEED * dt);
+      quality.sample(dt);
       accumulator += dt;
       let steps = 0;
       while (accumulator >= PHYSICS_DT && steps < MAX_STEPS) {
@@ -282,7 +318,7 @@ function frame(now) {
       `XYZ ${p.x.toFixed(2)} / ${p.y.toFixed(2)} / ${p.z.toFixed(2)}`,
       `Mirando ${facing(player.yaw)} (yaw ${((player.yaw * 180) / Math.PI).toFixed(0)}°, pitch ${((player.pitch * 180) / Math.PI).toFixed(0)}°)`,
       `Chunk ${Math.floor(p.x / CHUNK_SIZE)}, ${Math.floor(p.z / CHUNK_SIZE)}`,
-      `Chunks ${s.meshes} dibujados / ${s.loaded} cargados`,
+      `Chunks ${s.meshes} dibujados / ${s.loaded} cargados · distancia ${quality.distance}${input.fallback ? ' · sin captura de ratón' : ''}`,
       `Triángulos ${s.triangles.toLocaleString('es')}`,
       `${player.flying ? 'Volando' : player.inWater ? 'Nadando' : player.onGround ? 'En el suelo' : 'En el aire'}${player.sprinting ? ' · corriendo' : ''}${player.sneaking ? ' · agachada' : ''}`,
       t ? `Apuntando ${BLOCKS[t.id].label} (${t.x}, ${t.y}, ${t.z})` : 'Apuntando: nada',
