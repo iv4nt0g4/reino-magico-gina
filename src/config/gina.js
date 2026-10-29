@@ -9,5 +9,7 @@ export const GINA = {
   mascota: null,
   cosasQueLeEncantan: [],
   familia: [],
+  // Guiños de la familia en el mundo:
+  maestroDelDojo: 'Iván', // el dojo de la Aldea de las Siete Estrellas lleva su nombre
   cumpleanos: null, // formato 'MM-DD'
 };

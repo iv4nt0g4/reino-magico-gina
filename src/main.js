@@ -84,7 +84,7 @@ if (newWorld) {
 }
 
 // Acceso desde la consola del navegador para depurar (solo en `npm run dev`).
-if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage };
+if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality };
 
 // Estados: loading → paused ⇄ playing ⇄ catalog
 let state = 'loading';

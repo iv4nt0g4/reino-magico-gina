@@ -14,6 +14,11 @@ export const SEA_LEVEL = 34; // por debajo, agua
 const CITY_RADIUS = 130; // radio totalmente llano (ciudad y zonas especiales)
 const CITY_BLEND = 90; // distancia de transición hasta el terreno natural
 const CITY_NO_TREES = CITY_RADIUS + 5; // sin árboles dentro de este radio
+
+// Explanada de la Aldea de las Siete Estrellas, al sur de la ciudad, y el
+// camino llano que las une (ver structures/town.js).
+export const TOWN = { x: 0, z: 300, radius: 82, blend: 50 };
+const ROAD = { halfWidth: 6, blend: 8, z0: 100, z1: TOWN.z - TOWN.radius + 10 };
 const BEACH_LEVEL = SEA_LEVEL + 1; // hasta aquí, arena
 export const SNOW_LEVEL = 86; // por encima, nieve
 const TREE_MARGIN = 3; // radio máximo de copa: columnas vecinas a revisar
@@ -79,11 +84,20 @@ export function createTerrain(seed) {
 
     let h = 46 + continent * 14 + hills * 9 + ridge * ridge * mountainMask * 55 - lowlands;
 
-    // Aplanar la zona de la ciudad.
-    const d = Math.hypot(x, z);
-    h = CITY_LEVEL + (h - CITY_LEVEL) * smoothstep(CITY_RADIUS, CITY_RADIUS + CITY_BLEND, d);
+    // Aplanar la ciudad, la explanada de la aldea grande y el camino entre ambas
+    // (gana la zona que más aplana).
+    h = CITY_LEVEL + (h - CITY_LEVEL) * flatness(x, z);
 
     return Math.max(4, Math.min(CHUNK_HEIGHT - 20, Math.floor(h)));
+  }
+
+  // 0 = totalmente llano (al nivel de la ciudad), 1 = terreno natural.
+  function flatness(x, z) {
+    const city = smoothstep(CITY_RADIUS, CITY_RADIUS + CITY_BLEND, Math.hypot(x, z));
+    const town = smoothstep(TOWN.radius, TOWN.radius + TOWN.blend, Math.hypot(x - TOWN.x, z - TOWN.z));
+    const onRoad = z > ROAD.z0 && z < ROAD.z1;
+    const road = onRoad ? smoothstep(ROAD.halfWidth, ROAD.halfWidth + ROAD.blend, Math.abs(x)) : 1;
+    return Math.min(city, town, road);
   }
 
   function biomeAt(x, z) {
@@ -98,6 +112,8 @@ export function createTerrain(seed) {
   function treeAt(x, z, h) {
     if (h <= BEACH_LEVEL || h >= SNOW_LEVEL - 4) return null;
     if (Math.hypot(x, z) < CITY_NO_TREES) return null;
+    if (Math.hypot(x - TOWN.x, z - TOWN.z) < TOWN.radius + 5) return null;
+    if (z > ROAD.z0 && z < ROAD.z1 && Math.abs(x) < ROAD.halfWidth + 4) return null;
     const biome = biomeAt(x, z);
     const density = biome === FOREST ? 0.045 : biome === CHERRY ? 0.02 : 0.0025;
     if (hash2(x, z, salt + 1) >= density) return null;

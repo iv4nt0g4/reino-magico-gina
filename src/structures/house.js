@@ -22,14 +22,15 @@ const FLOWERS = ['flower_red', 'flower_yellow', 'flower_blue', 'flower_pink', 'f
 
 // ---------- Casas ----------
 
-export function house(f, rng, { width, depth, name, style }) {
+// `palette` (opcional) limita los materiales: { walls: [...], trims: [...], roofs: [...] }.
+export function house(f, rng, { width, depth, name, style, palette }) {
   clearLot(f, width, depth);
   style ??= pickStyle(rng, width);
   if (style === 'tower') return towerHouse(f, rng, width, depth, name);
   if (style === 'mushroom') return mushroomHouse(f, rng, width, depth, name);
 
   const floors = style === 'townhouse' ? 2 : 1;
-  const cfg = bodyConfig(f, rng, width, depth, floors);
+  const cfg = bodyConfig(f, rng, width, depth, floors, palette);
   cfg.name = name;
   body(f, rng, cfg, name);
   furnishGround(f, rng, cfg);
@@ -52,7 +53,7 @@ function clearLot(f, width, depth) {
   f.fill(0, F, 0, width - 1, F, depth - 1, 'air');
 }
 
-function bodyConfig(f, rng, width, depth, floors) {
+function bodyConfig(f, rng, width, depth, floors, palette = {}) {
   const u0 = 1;
   const u1 = width - 2;
   const v0 = 2;
@@ -62,9 +63,9 @@ function bodyConfig(f, rng, width, depth, floors) {
     floors,
     top: G + FLOOR_HEIGHT * floors, // altura del techo
     door: Math.floor((u0 + u1) / 2),
-    wall: rng.pick(WALLS),
-    trim: rng.pick(TRIMS),
-    roof: rng.pick(ROOFS),
+    wall: rng.pick(palette.walls ?? WALLS),
+    trim: rng.pick(palette.trims ?? TRIMS),
+    roof: rng.pick(palette.roofs ?? ROOFS),
   };
 }
 
