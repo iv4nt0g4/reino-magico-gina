@@ -26,6 +26,7 @@ import { station, railway } from './station.js';
 import { ginaHouse } from './ginaHouse.js';
 import { windmill, fields, farmyard } from './farm.js';
 import { well, marketStall, bench, cart, barrels, plantedTree, unicornStatue } from './props.js';
+import { buildTown, townRoad } from './town.js';
 
 const G = CITY_LEVEL;
 const F = G + 1;
@@ -54,6 +55,9 @@ export function buildCity() {
   neighborhoods(b, rng);
   castleFront(b, rng);
   specialPlaces(b, rng);
+  // La Aldea de las Siete Estrellas, al sur, con su camino desde la Calle de la Luna.
+  buildTown(b);
+  townRoad(b);
   return b;
 }
 
@@ -161,6 +165,7 @@ function neighborhoods(b, rng) {
     house(new Frame(b, x, 91, 'south'), rng, { width: 11, depth: 11, name: `casa de la Calle de la Luna (${x}, norte)` });
   }
   for (let x = 66; x - 10 >= -66; x -= 11) {
+    if (x - 10 <= 3 && x >= -3) continue; // hueco para el camino a la Aldea de las Siete Estrellas
     const frame = new Frame(b, x, 95, 'north');
     if (rng.chance(0.25)) shop(frame, rng, { width: 11, depth: 12, type: rng.pick(SHOP_TYPES.slice(5)), name: `tienda de la Calle de la Luna (${x})` });
     else house(frame, rng, { width: 11, depth: 12, name: `casa de la Calle de la Luna (${x}, sur)` });

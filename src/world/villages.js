@@ -15,7 +15,7 @@ import { StructureBuilder } from '../structures/builder.js';
 import { Frame, createRandom } from '../structures/frame.js';
 import { house } from '../structures/house.js';
 import { well, bench, cart, barrels, marketStall } from '../structures/props.js';
-import { SEA_LEVEL, SNOW_LEVEL } from './terrain.js';
+import { SEA_LEVEL, SNOW_LEVEL, TOWN } from './terrain.js';
 
 const VILLAGE_CELL = 288; // como mucho una aldea por celda de 288 × 288
 const NOOK_CELL = 112; // rincones, en celdas más pequeñas
@@ -48,6 +48,8 @@ export function createVillagePlanner(terrain, seed) {
   // Comprueba que la zona sea apta y devuelve la altura de la plaza (o null).
   function groundFor(x, z, radius) {
     if (Math.hypot(x, z) < MIN_DISTANCE) return null;
+    if (Math.hypot(x - TOWN.x, z - TOWN.z) < TOWN.radius + TOWN.blend + 40) return null; // lejos de la aldea grande
+    if (Math.abs(x) < 30 && z > 90 && z < TOWN.z) return null; // ni en su camino
     const heights = [];
     for (let dz = -radius; dz <= radius; dz += 6) {
       for (let dx = -radius; dx <= radius; dx += 6) heights.push(terrain.heightAt(x + dx, z + dz));
