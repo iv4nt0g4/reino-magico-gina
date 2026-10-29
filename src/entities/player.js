@@ -3,7 +3,7 @@
 // bloques, caminar ~4,3 b/s, correr ~5,6 b/s, agacharse sin caer por bordes
 // y, en modo creativo, volar con doble Espacio.
 
-import { BLOCKS } from '../blocks/registry.js';
+import { BLOCKS, IS_LIQUID } from '../blocks/registry.js';
 
 const WIDTH = 0.6;
 const HEIGHT = 1.8;
@@ -24,6 +24,9 @@ export class Player {
     this.sneaking = false;
     this.sprinting = false;
     this.flying = false;
+    this.inWater = false; // el cuerpo está en el agua
+    this.headInWater = false; // la cámara está bajo el agua
+    this.hitWall = false; // en el último paso chocó de lado con algo
     this.canFly = true; // modo creativo (la "Aventura suave" llega en la fase 8)
     this.eyeOffset = EYE_HEIGHT;
     this.stepDistance = 0; // recorrido desde el último paso
@@ -58,6 +61,8 @@ export class Player {
     if (input.forward <= 0 || this.sneaking) this.sprinting = false;
     let speed = this.sneaking ? S.sneakSpeed : this.sprinting ? S.sprintSpeed : S.walkSpeed;
     if (this.flying) speed = this.sprinting ? S.flySprintSpeed : S.flySpeed;
+    else if (this.inWater) speed *= S.swimSpeedFactor;
+    const swimming = this.inWater && !this.flying;
 
     // --- Velocidad horizontal deseada según la orientación ---
     let fx = 0, fz = 0;
@@ -70,7 +75,7 @@ export class Player {
       fx = (fx / len) * speed;
       fz = (fz / len) * speed;
     }
-    const control = this.flying ? S.flyControl : this.onGround ? S.groundControl : S.airControl;
+    const control = this.flying ? S.flyControl : swimming ? S.swimControl : this.onGround ? S.groundControl : S.airControl;
     const k = 1 - Math.exp(-control * dt);
     this.velocity.x += (fx - this.velocity.x) * k;
     this.velocity.z += (fz - this.velocity.z) * k;
@@ -80,6 +85,15 @@ export class Player {
     if (this.flying) {
       const vertical = ((input.jump ? 1 : 0) - (input.sneak ? 1 : 0)) * S.flyVerticalSpeed;
       this.velocity.y += (vertical - this.velocity.y) * k;
+      dy = this.velocity.y * dt;
+    } else if (swimming) {
+      // Nadar: Espacio sube, si no se hunde despacio. Saltando contra la orilla, sale del agua.
+      if (input.jump && this.hitWall) {
+        this.velocity.y = Math.max(this.velocity.y, S.swimExitSpeed);
+      } else {
+        const target = input.jump ? S.swimUpSpeed : -S.sinkSpeed;
+        this.velocity.y += (target - this.velocity.y) * k;
+      }
       dy = this.velocity.y * dt;
     } else {
       if (input.jump && this.onGround) {
@@ -109,7 +123,7 @@ export class Player {
     if (this.onGround) {
       this.flying = false; // al tocar el suelo se deja de volar, como en el original
       const below = this.blockBelow(world);
-      if (!wasOnGround) {
+      if (!wasOnGround && !this.inWater) {
         this.events.push({ type: 'land', block: below, speed: fallSpeed });
         // Rebote en la nube (agachada no rebota, para poder quedarse encima).
         if (BLOCKS[below]?.bounce && !this.sneaking && fallSpeed > S.minBounceSpeed) {
@@ -127,8 +141,18 @@ export class Player {
     this.position.z += movedZ;
     if (movedZ !== dz) this.velocity.z = 0;
 
+    this.hitWall = movedX !== dx || movedZ !== dz;
+
+    // ¿En el agua? (pies o cintura, y la cámara para teñir la vista)
+    const wasInWater = this.inWater;
+    const p = this.position;
+    const liquidAt = (y) => IS_LIQUID[Math.max(0, world.getBlock(Math.floor(p.x), Math.floor(y), Math.floor(p.z)))] === 1;
+    this.inWater = liquidAt(p.y + 0.1) || liquidAt(p.y + 0.9);
+    this.headInWater = liquidAt(p.y + this.eyeOffset);
+    if (this.inWater && !wasInWater && fallSpeed > 3) this.events.push({ type: 'splash', speed: fallSpeed });
+
     // Pasos: un sonido cada cierta distancia caminada por el suelo.
-    if (this.onGround) {
+    if (this.onGround && !this.inWater) {
       this.stepDistance += Math.hypot(movedX, movedZ);
       if (this.stepDistance > S.stepDistance) {
         this.stepDistance = 0;

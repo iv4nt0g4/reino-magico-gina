@@ -270,3 +270,25 @@ kbd {
   height: 42px;
   image-rendering: pixelated;
 }
+
+/* ---------- Bajo el agua y guardado ---------- */
+#underwater {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 80, 170, 0.35);
+  pointer-events: none;
+}
+
+#saved {
+  position: fixed;
+  right: 14px;
+  top: 10px;
+  font-size: 26px;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+
+#saved.visible {
+  opacity: 0.9;
+}

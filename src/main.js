@@ -1,13 +1,16 @@
-// Punto de entrada: monta el motor y ejecuta el bucle del juego.
+// Punto de entrada: monta el motor, carga la partida guardada y ejecuta el bucle del juego.
 
 import './style.css';
 import { SETTINGS } from './config/settings.js';
 import { createRenderer } from './engine/renderer.js';
-import { createBlockMaterial, setFog } from './blocks/material.js';
+import { createBlockMaterials } from './blocks/material.js';
 import { ChunkManager } from './engine/chunks.js';
 import { Input } from './engine/input.js';
 import { Interaction } from './engine/interaction.js';
+import { Sky } from './engine/sky.js';
 import { Player } from './entities/player.js';
+import { WaterSimulation } from './world/water.js';
+import { Storage, SAVE_VERSION } from './world/storage.js';
 import { Sounds } from './audio/sounds.js';
 import { Hud } from './ui/hud.js';
 import { Hotbar } from './ui/hotbar.js';
@@ -19,26 +22,42 @@ const PHYSICS_DT = 1 / 60; // paso fijo de física
 const MAX_STEPS = 5; // evita la "espiral de la muerte" si el juego va lento
 const LOADING_RADIUS = 2; // chunks que deben verse antes de poder jugar
 
-// Punto de aparición: el centro del mundo, o ?pos=x,z en la URL (depuración).
-const [SPAWN_X, SPAWN_Z] = (new URLSearchParams(location.search).get('pos') ?? '0,0')
-  .split(',')
-  .map((v) => Math.floor(Number(v)) || 0);
-
 const hud = new Hud();
-const { renderer, scene, camera, viewDistance } = createRenderer(document.getElementById('game'), SETTINGS);
-const material = createBlockMaterial();
-setFog(material, SETTINGS.skyColor, viewDistance * 0.6, viewDistance);
 
-const world = new ChunkManager(scene, material, SETTINGS);
+// ---- Partida guardada ----
+const storage = await Storage.open();
+const saved = await storage?.loadMeta().catch(() => null);
+const meta = saved?.version === SAVE_VERSION ? saved : null;
+if (meta) SETTINGS.seed = meta.seed;
+
+// Punto de aparición: ?pos=x,z en la URL (depuración), la partida guardada o el centro del mundo.
+const urlPos = new URLSearchParams(location.search).get('pos');
+const [SPAWN_X, SPAWN_Z] = urlPos
+  ? urlPos.split(',').map((v) => Math.floor(Number(v)) || 0)
+  : meta
+    ? [Math.floor(meta.player.x), Math.floor(meta.player.z)]
+    : [0, 0];
+
+// ---- Motor ----
+const { renderer, scene, camera, viewDistance } = createRenderer(document.getElementById('game'), SETTINGS);
+const materials = createBlockMaterials();
+const world = new ChunkManager(scene, materials, SETTINGS, storage);
+const water = new WaterSimulation(world);
+const sky = new Sky(scene, camera, materials.uniforms, SETTINGS, viewDistance);
 const player = new Player(SETTINGS);
 const input = new Input(renderer.domElement, SETTINGS);
 const sounds = new Sounds(SETTINGS.volume);
 const hotbar = new Hotbar();
 const catalog = new Catalog(hotbar);
-const interaction = new Interaction({ scene, camera, world, player, hotbar, sounds, settings: SETTINGS });
+const interaction = new Interaction({ scene, camera, world, water, player, hotbar, sounds, settings: SETTINGS });
+
+if (meta) {
+  hotbar.restore(meta.hotbar, meta.selected);
+  sky.time = meta.time;
+}
 
 // Acceso desde la consola del navegador para depurar (solo en `npm run dev`).
-if (import.meta.env.DEV) window.__juego = { player, world, hotbar, interaction, sounds };
+if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage };
 
 // Estados: loading → paused ⇄ playing ⇄ catalog
 let state = 'loading';
@@ -47,9 +66,11 @@ let lastTime = performance.now();
 let fps = 0, fpsFrames = 0, fpsTime = 0;
 
 function setState(next) {
+  const previous = state;
   state = next;
   hud.setState(next);
   if (next !== 'playing') interaction.hideOutline();
+  if (next === 'paused' && previous === 'playing') saveGame();
 }
 
 function play() {
@@ -57,6 +78,36 @@ function play() {
   input.requestLock().catch(() => setState('paused'));
 }
 
+// ---- Guardado ----
+let saving = false;
+async function saveGame() {
+  if (!storage || state === 'loading' || saving) return;
+  saving = true;
+  try {
+    await world.saveEdits();
+    const p = player.position;
+    await storage.saveMeta({
+      version: SAVE_VERSION,
+      seed: SETTINGS.seed,
+      player: { x: p.x, y: p.y, z: p.z, yaw: player.yaw, pitch: player.pitch, flying: player.flying },
+      hotbar: hotbar.slots,
+      selected: hotbar.selected,
+      time: sky.time,
+      savedAt: Date.now(),
+    });
+    hud.showSaved();
+  } catch (error) {
+    console.warn('No se pudo guardar la partida:', error);
+  } finally {
+    saving = false;
+  }
+}
+setInterval(saveGame, SETTINGS.autosaveSeconds * 1000);
+// Al cambiar de pestaña o cerrar, guardar (es el momento fiable para hacerlo).
+document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && saveGame());
+window.addEventListener('pagehide', saveGame);
+
+// ---- Controles ----
 input.onToggleDebug = () => hud.toggleDebug();
 input.onHotbarSelect = (i) => hotbar.select(i);
 input.onHotbarScroll = (d) => hotbar.scroll(d);
@@ -86,10 +137,18 @@ document.addEventListener('fullscreenchange', () => {
   if (document.fullscreenElement) navigator.keyboard?.lock?.(['KeyW', 'ControlLeft', 'ControlRight']).catch(() => {});
 });
 
-// Coloca al jugador sobre el suelo en el punto de aparición.
+// ---- Carga ----
 function spawn() {
-  const top = world.topSolidY(SPAWN_X, SPAWN_Z);
-  player.spawnAt(SPAWN_X + 0.5, top + 1, SPAWN_Z + 0.5);
+  if (meta && !urlPos) {
+    const p = meta.player;
+    player.spawnAt(p.x, p.y, p.z);
+    player.yaw = p.yaw;
+    player.pitch = p.pitch;
+    player.flying = p.flying;
+  } else {
+    const top = world.topSolidY(SPAWN_X, SPAWN_Z);
+    player.spawnAt(SPAWN_X + 0.5, top + 1, SPAWN_Z + 0.5);
+  }
 }
 
 function updateLoading() {
@@ -106,9 +165,10 @@ function updateLoading() {
   }
 }
 
-// Sonidos de pasos y aterrizajes que ha generado la física.
+// Sonidos de pasos, aterrizajes y chapuzones que ha generado la física.
 function playPlayerSounds() {
   for (const e of player.events) {
+    if (e.type === 'splash') sounds.play('water', 'splash', Math.min(1.5, e.speed / 10));
     if (!e.block) continue;
     const material = BLOCKS[e.block].sound;
     if (e.type === 'step') sounds.play(material, 'step', e.quiet ? 0.4 : 1);
@@ -117,6 +177,20 @@ function playPlayerSounds() {
   player.events.length = 0;
 }
 
+// Hora del juego como reloj (0 = amanecer a las 6:00).
+function clock(time) {
+  const minutes = Math.floor(((time * 24 + 6) % 24) * 60);
+  return `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`;
+}
+
+// Punto cardinal hacia el que mira el jugador (norte = -Z).
+function facing(yaw) {
+  const names = ['norte', 'oeste', 'sur', 'este'];
+  const i = Math.round(yaw / (Math.PI / 2));
+  return names[((i % 4) + 4) % 4];
+}
+
+// ---- Bucle principal ----
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.25, (now - lastTime) / 1000);
@@ -138,6 +212,8 @@ function frame(now) {
       }
       if (steps === MAX_STEPS) accumulator = 0;
       playPlayerSounds();
+      sky.advance(dt);
+      water.update(dt);
     }
     world.update(player.position.x, player.position.z);
   }
@@ -155,7 +231,10 @@ function frame(now) {
 
   // Bloque apuntado, romper y colocar (después de mover la cámara).
   if (state === 'playing') interaction.update(input.buttons, now);
+  world.flushEdits();
 
+  sky.update(player.headInWater);
+  hud.setUnderwater(player.headInWater);
   renderer.render(scene, camera);
 
   // Panel de depuración (F3)
@@ -168,23 +247,17 @@ function frame(now) {
     const s = world.stats();
     const t = interaction.target;
     hud.updateDebug([
-      `${fps} fps`,
+      `${fps} fps · ${clock(sky.time)}`,
       `XYZ ${p.x.toFixed(2)} / ${p.y.toFixed(2)} / ${p.z.toFixed(2)}`,
       `Mirando ${facing(player.yaw)} (yaw ${((player.yaw * 180) / Math.PI).toFixed(0)}°, pitch ${((player.pitch * 180) / Math.PI).toFixed(0)}°)`,
       `Chunk ${Math.floor(p.x / CHUNK_SIZE)}, ${Math.floor(p.z / CHUNK_SIZE)}`,
       `Chunks ${s.meshes} dibujados / ${s.loaded} cargados`,
       `Triángulos ${s.triangles.toLocaleString('es')}`,
-      `${player.flying ? 'Volando' : player.onGround ? 'En el suelo' : 'En el aire'}${player.sprinting ? ' · corriendo' : ''}${player.sneaking ? ' · agachada' : ''}`,
+      `${player.flying ? 'Volando' : player.inWater ? 'Nadando' : player.onGround ? 'En el suelo' : 'En el aire'}${player.sprinting ? ' · corriendo' : ''}${player.sneaking ? ' · agachada' : ''}`,
       t ? `Apuntando ${BLOCKS[t.id].label} (${t.x}, ${t.y}, ${t.z})` : 'Apuntando: nada',
+      storage ? '💾 Guardado activado' : '💾 Sin guardado (navegador)',
     ]);
   }
-}
-
-// Punto cardinal hacia el que mira el jugador (norte = -Z).
-function facing(yaw) {
-  const names = ['norte', 'oeste', 'sur', 'este'];
-  const i = Math.round(yaw / (Math.PI / 2));
-  return names[((i % 4) + 4) % 4];
 }
 
 requestAnimationFrame(frame);

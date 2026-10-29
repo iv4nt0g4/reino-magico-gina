@@ -8,8 +8,7 @@ export function createRenderer(container, settings) {
   renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
 
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(settings.skyColor);
+  const scene = new THREE.Scene(); // el fondo lo pinta la cúpula del cielo (engine/sky.js)
 
   const viewDistance = (settings.renderDistance + 1) * 16;
   const camera = new THREE.PerspectiveCamera(settings.fov, window.innerWidth / window.innerHeight, 0.05, viewDistance + 64);

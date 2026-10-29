@@ -12,6 +12,8 @@ export class Hud {
     this.loadingBar = document.getElementById('loading-bar');
     this.crosshair = document.getElementById('crosshair');
     this.debug = document.getElementById('debug');
+    this.underwater = document.getElementById('underwater');
+    this.saved = document.getElementById('saved');
 
     this.title.textContent = GINA.tituloJuego;
     document.title = GINA.tituloJuego;
@@ -36,6 +38,18 @@ export class Hud {
     this.overlay.hidden = state !== 'paused';
     this.crosshair.hidden = state !== 'playing';
     if (state === 'playing') this.playButton.textContent = '▶ Seguir'; // tras la primera partida
+  }
+
+  // Tinte azul al tener la cabeza bajo el agua.
+  setUnderwater(underwater) {
+    this.underwater.hidden = !underwater;
+  }
+
+  // Disquete un momento en la esquina al guardar.
+  showSaved() {
+    this.saved.classList.add('visible');
+    clearTimeout(this.savedTimer);
+    this.savedTimer = setTimeout(() => this.saved.classList.remove('visible'), 1200);
   }
 
   toggleDebug() {

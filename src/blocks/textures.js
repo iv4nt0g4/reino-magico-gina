@@ -228,6 +228,59 @@ const PAINTERS = {
   },
 };
 
+// Flor: tallo verde con hojas y una corola del color dado.
+function flower(petal, center, seed) {
+  return (x, y) => {
+    const dx = x - 7.5, dy = y - 5;
+    const r = Math.hypot(dx, dy);
+    if (r < 1.3) return center;
+    if (r < 3.4 && rand(x, y, seed) > 0.08) return shade(petal, (rand(x, y, seed + 1) - 0.5) * 0.2);
+    if (y >= 7 && (x === 7 || x === 8)) return [70, 150, 60]; // tallo
+    if ((y === 10 && (x === 5 || x === 6)) || (y === 12 && (x === 9 || x === 10))) return [90, 170, 70]; // hojas
+    return null;
+  };
+}
+
+Object.assign(PAINTERS, {
+  water: (x, y) => {
+    // Azul con ondas suaves; semitransparente (el último valor es la opacidad).
+    const wave = Math.sin((x + y * 0.5) * 0.8) * 0.5 + Math.sin((x * 0.4 - y) * 0.9) * 0.5;
+    const c = shade([52, 120, 220], wave * 0.08 + (rand(x, y, 60) - 0.5) * 0.04);
+    return [c[0], c[1], c[2], 170];
+  },
+  tall_grass: (x, y) => {
+    // Briznas de distinta altura.
+    const height = 5 + Math.floor(rand(x, 0, 61) * 10);
+    if (x % 2 === 1 || 15 - y > height) return null;
+    return shade([96, 176, 74], (rand(x, y, 62) - 0.5) * 0.3 - (y / 16) * 0.15);
+  },
+  flower_red: flower([226, 60, 70], [255, 220, 90], 63),
+  flower_yellow: flower([250, 214, 60], [230, 140, 40], 64),
+  flower_blue: flower([90, 140, 240], [255, 250, 220], 65),
+  flower_pink: flower([250, 150, 200], [255, 240, 120], 66),
+  flower_white: flower([250, 250, 250], [250, 200, 50], 67),
+  torch: (x, y) => {
+    // Palito de madera con llama arriba.
+    if (x < 7 || x > 8 || y < 4) {
+      if (y < 4 && Math.hypot(x - 7.5, y - 2.5) < 2.2) return [255, 200, 60]; // halo
+      return null;
+    }
+    if (y < 6) return y === 4 ? [255, 250, 200] : [255, 170, 50]; // llama
+    return shade([130, 92, 52], (rand(x, y, 68) - 0.5) * 0.2);
+  },
+  lantern: (x, y) => {
+    // Marco de metal oscuro con cristal cálido y brillante.
+    const frame = x <= 1 || x >= 14 || y <= 1 || y >= 14 || x === 7 || x === 8;
+    if (frame) return shade([60, 52, 70], (rand(x, y, 69) - 0.5) * 0.1);
+    const glow = 1 - Math.hypot(x - 7.5, y - 7.5) / 10;
+    return mix([255, 196, 90], [255, 246, 200], Math.max(0, glow));
+  },
+  lantern_top: (x, y) => {
+    const edge = x <= 1 || x >= 14 || y <= 1 || y >= 14;
+    return edge ? [60, 52, 70] : shade([84, 74, 96], (rand(x, y, 70) - 0.5) * 0.1);
+  },
+});
+
 for (const c of WOOL_COLORS) PAINTERS[`wool_${c.key}`] = wool(c.rgb, 50);
 for (const c of PASTEL_COLORS) PAINTERS[`pastel_${c.key}`] = pastel(c.rgb, 51);
 for (const c of TILE_COLORS) PAINTERS[`tiles_${c.key}`] = tiles(c.rgb, 52);
@@ -246,7 +299,7 @@ export function paintTexture(name) {
       data[i] = c[0];
       data[i + 1] = c[1];
       data[i + 2] = c[2];
-      data[i + 3] = 255;
+      data[i + 3] = c[3] ?? 255; // un cuarto valor opcional es la opacidad (agua)
     }
   }
   return data;

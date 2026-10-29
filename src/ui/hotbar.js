@@ -4,7 +4,7 @@
 import { BLOCK, BLOCKS } from '../blocks/registry.js';
 import { getBlockIcon } from '../blocks/icons.js';
 
-const START_BLOCKS = ['grass', 'stone', 'planks', 'bricks', 'glass', 'pastel_pink', 'wool_light_blue', 'cherry_leaves', 'cloud'];
+const START_BLOCKS = ['grass', 'stone', 'planks', 'bricks', 'glass', 'pastel_pink', 'torch', 'water', 'cloud'];
 
 export class Hotbar {
   constructor() {
@@ -23,6 +23,13 @@ export class Hotbar {
       this.element.appendChild(cell);
       return cell;
     });
+    this.#render();
+  }
+
+  // Restaura la barra de una partida guardada.
+  restore(slots, selected) {
+    if (Array.isArray(slots) && slots.length === 9) this.slots = slots.map((id) => (BLOCKS[id] ? id : 0));
+    this.selected = Number.isInteger(selected) ? (selected + 9) % 9 : 0;
     this.#render();
   }
 
