@@ -15,9 +15,12 @@ export class WorkerPool {
   }
 
   // Envía un mensaje; `transfer` son los buffers que se ceden al worker.
-  run(message, transfer = []) {
+  // Los trabajos urgentes (ediciones de Gina) se cuelan al principio de la cola.
+  run(message, transfer = [], urgent = false) {
     return new Promise((resolve) => {
-      this.queue.push({ message: { ...message, id: this.nextId++ }, transfer, resolve });
+      const job = { message: { ...message, id: this.nextId++ }, transfer, resolve };
+      if (urgent) this.queue.unshift(job);
+      else this.queue.push(job);
       this.#dispatch();
     });
   }

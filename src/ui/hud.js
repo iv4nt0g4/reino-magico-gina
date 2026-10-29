@@ -1,5 +1,5 @@
 // Interfaz por encima del canvas: pantalla de inicio/pausa, carga, punto de
-// mira y panel de depuración (F3).
+// mira y panel de depuración (F3). La barra rápida y el catálogo van aparte.
 
 import { GINA } from '../config/gina.js';
 
@@ -31,11 +31,11 @@ export class Hud {
     });
   }
 
-  // Pausa (Esc) o jugando.
-  setPlaying(playing) {
-    this.overlay.hidden = playing;
-    this.crosshair.hidden = !playing;
-    this.playButton.textContent = '▶ Seguir';
+  // Muestra la interfaz según el estado: 'playing', 'paused' o 'catalog'.
+  setState(state) {
+    this.overlay.hidden = state !== 'paused';
+    this.crosshair.hidden = state !== 'playing';
+    if (state === 'playing') this.playButton.textContent = '▶ Seguir'; // tras la primera partida
   }
 
   toggleDebug() {

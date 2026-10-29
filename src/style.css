@@ -127,3 +127,146 @@ kbd {
   font: inherit;
   font-size: 14px;
 }
+
+/* ---------- Barra rápida ---------- */
+#hotbar {
+  position: fixed;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 14px;
+  background: rgba(40, 20, 70, 0.45);
+  z-index: 2; /* por encima del catálogo, para poder elegir hueco con él abierto */
+}
+
+.slot {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+}
+
+.slot img {
+  width: 40px;
+  height: 40px;
+  image-rendering: pixelated;
+}
+
+.slot span {
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.slot.selected {
+  border-color: #fff;
+  background: rgba(255, 140, 210, 0.45);
+  box-shadow: 0 0 12px rgba(255, 180, 230, 0.9);
+}
+
+#block-name {
+  position: fixed;
+  left: 50%;
+  bottom: 86px;
+  transform: translateX(-50%);
+  padding: 3px 12px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 18px;
+  background: rgba(40, 20, 70, 0.5);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+#block-name.visible {
+  opacity: 1;
+}
+
+/* ---------- Catálogo creativo ---------- */
+#catalog {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(60, 30, 100, 0.35);
+}
+
+.catalog-panel {
+  width: min(640px, calc(100vw - 32px));
+  margin-bottom: 80px;
+  padding: 14px 16px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 40px rgba(90, 40, 140, 0.35);
+}
+
+.catalog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+#catalog-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab,
+#catalog-close {
+  font-size: 26px;
+  width: 52px;
+  height: 46px;
+  border: none;
+  border-radius: 12px;
+  background: #f1e3ff;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: linear-gradient(135deg, #ff9ad5, #b59bff);
+  box-shadow: 0 3px 0 #8a5fd6;
+}
+
+#catalog-close {
+  font-size: 20px;
+  color: #8a5fd6;
+}
+
+#catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 6px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.block {
+  height: 58px;
+  border: 3px solid transparent;
+  border-radius: 12px;
+  background: #f7f0ff;
+  cursor: pointer;
+}
+
+.block:hover {
+  border-color: #ff9ad5;
+  background: #fff;
+}
+
+.block img {
+  width: 42px;
+  height: 42px;
+  image-rendering: pixelated;
+}
