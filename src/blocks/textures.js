@@ -275,6 +275,18 @@ Object.assign(PAINTERS, {
     const glow = 1 - Math.hypot(x - 7.5, y - 7.5) / 10;
     return mix([255, 196, 90], [255, 246, 200], Math.max(0, glow));
   },
+  bookshelf: (x, y) => {
+    // Dos baldas de madera con libros de colores de distinta altura.
+    if (y === 0 || y === 15 || y === 7 || y === 8 || x === 0 || x === 15) return shade([150, 112, 66], (rand(x, y, 71) - 0.5) * 0.1);
+    const shelf = y < 7 ? 0 : 1;
+    const book = Math.floor((x - 1) / 2);
+    const colors = [[200, 70, 80], [80, 130, 210], [240, 190, 70], [110, 170, 90], [170, 100, 200], [240, 140, 180], [90, 180, 190]];
+    const height = 3 + Math.floor(rand(book, shelf, 72) * 4); // altura del libro
+    const top = shelf === 0 ? 7 - height : 15 - height;
+    if (y < top) return [70, 50, 34]; // hueco oscuro sobre el libro
+    const c = colors[Math.floor(rand(book, shelf, 73) * colors.length)];
+    return shade(c, (x - 1) % 2 === 0 ? 0.05 : -0.12);
+  },
   lantern_top: (x, y) => {
     const edge = x <= 1 || x >= 14 || y <= 1 || y >= 14;
     return edge ? [60, 52, 70] : shade([84, 74, 96], (rand(x, y, 70) - 0.5) * 0.1);

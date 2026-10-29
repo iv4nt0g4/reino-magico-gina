@@ -292,3 +292,49 @@ kbd {
 #saved.visible {
   opacity: 0.9;
 }
+
+/* ---------- Carga y mundo nuevo ---------- */
+#loading-label {
+  min-height: 1.2em;
+  margin-bottom: 8px;
+  color: #8a5fd6;
+}
+
+#new-world {
+  margin-top: 18px;
+}
+
+#new-world button {
+  font: inherit;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+#new-world-ask {
+  padding: 6px 16px;
+  color: #6a4a9a;
+  background: #f1e3ff;
+}
+
+#new-world-confirm p {
+  margin: 0 0 8px;
+  color: #6a4a9a;
+}
+
+#new-world-yes,
+#new-world-no {
+  width: 56px;
+  height: 40px;
+  margin: 0 6px;
+  font-size: 22px;
+  color: #fff;
+}
+
+#new-world-yes {
+  background: #6cc48a;
+}
+
+#new-world-no {
+  background: #e7849a;
+}

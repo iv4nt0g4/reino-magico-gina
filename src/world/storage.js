@@ -62,6 +62,18 @@ export class Storage {
     });
   }
 
+  // Borra la partida entera (para empezar un mundo nuevo).
+  clear() {
+    const tx = this.db.transaction(['chunks', 'meta'], 'readwrite');
+    tx.objectStore('chunks').clear();
+    tx.objectStore('meta').clear();
+    this.chunkKeys.clear();
+    return new Promise((resolve, reject) => {
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
   loadMeta() {
     return request(this.db.transaction('meta').objectStore('meta').get('game'));
   }

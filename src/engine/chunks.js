@@ -255,6 +255,24 @@ export class ChunkManager {
     }
   }
 
+  // Construye estructuras en un mundo nuevo: genera el terreno de cada chunk
+  // afectado, le aplica los bloques del constructor y lo marca como editado
+  // (así se guarda y ya no se vuelve a generar). `onProgress(hechos, total)`.
+  async bakeStructures(builder, onProgress) {
+    const keys = [...builder.chunks.keys()];
+    let done = 0;
+    await Promise.all(
+      keys.map(async (key) => {
+        const [cx, cz] = key.split(',').map(Number);
+        const { blocks } = await this.pool.run({ type: 'generate', cx, cz, seed: this.settings.seed });
+        builder.applyTo(key, blocks);
+        this.edited.set(key, blocks);
+        this.unsaved.add(key);
+        onProgress?.(++done, keys.length);
+      }),
+    );
+  }
+
   // Guarda los chunks con cambios pendientes.
   async saveEdits() {
     if (!this.storage || this.unsaved.size === 0) return;

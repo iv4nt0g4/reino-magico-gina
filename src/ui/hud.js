@@ -10,6 +10,7 @@ export class Hud {
     this.playButton = document.getElementById('play');
     this.loading = document.getElementById('loading');
     this.loadingBar = document.getElementById('loading-bar');
+    this.loadingLabel = document.getElementById('loading-label');
     this.crosshair = document.getElementById('crosshair');
     this.debug = document.getElementById('debug');
     this.underwater = document.getElementById('underwater');
@@ -19,13 +20,33 @@ export class Hud {
     document.title = GINA.tituloJuego;
   }
 
-  setLoading(progress) {
+  // Barra de carga, con un texto opcional (por ejemplo, mientras se construye el reino).
+  setLoading(progress, label = '') {
     this.loadingBar.style.width = `${Math.round(progress * 100)}%`;
+    this.loadingLabel.textContent = label;
+  }
+
+  // Botón de mundo nuevo en la pausa, con confirmación para no borrar sin querer.
+  enableNewWorld(onConfirm) {
+    const panel = document.getElementById('new-world');
+    const ask = document.getElementById('new-world-ask');
+    const confirm = document.getElementById('new-world-confirm');
+    panel.hidden = false;
+    ask.addEventListener('click', () => {
+      ask.hidden = true;
+      confirm.hidden = false;
+    });
+    document.getElementById('new-world-no').addEventListener('click', () => {
+      ask.hidden = false;
+      confirm.hidden = true;
+    });
+    document.getElementById('new-world-yes').addEventListener('click', onConfirm);
   }
 
   // Muestra el botón de jugar cuando el mundo cercano ya está listo.
   ready(onPlay) {
     this.loading.hidden = true;
+    this.loadingLabel.textContent = '';
     this.playButton.hidden = false;
     this.playButton.addEventListener('click', onPlay);
     this.overlay.addEventListener('click', (e) => {
