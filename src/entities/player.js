@@ -1,6 +1,9 @@
 // Jugador: posición, cámara y física (gravedad, salto y colisiones AABB
 // contra los bloques), con las sensaciones del género: salto de 1,25
-// bloques, caminar ~4,3 b/s, correr ~5,6 b/s y agacharse sin caer por bordes.
+// bloques, caminar ~4,3 b/s, correr ~5,6 b/s, agacharse sin caer por bordes
+// y, en modo creativo, volar con doble Espacio.
+
+import { BLOCKS } from '../blocks/registry.js';
 
 const WIDTH = 0.6;
 const HEIGHT = 1.8;
@@ -20,13 +23,18 @@ export class Player {
     this.onGround = false;
     this.sneaking = false;
     this.sprinting = false;
+    this.flying = false;
+    this.canFly = true; // modo creativo (la "Aventura suave" llega en la fase 8)
     this.eyeOffset = EYE_HEIGHT;
+    this.stepDistance = 0; // recorrido desde el último paso
+    this.events = []; // { type: 'step' | 'land', block, speed? } para los sonidos
   }
 
   spawnAt(x, y, z) {
     this.position = { x, y, z };
     this.previous = { x, y, z };
     this.velocity = { x: 0, y: 0, z: 0 };
+    this.flying = false;
   }
 
   look(dx, dy) {
@@ -41,10 +49,15 @@ export class Player {
     this.previous = { ...this.position };
 
     // --- Estado de movimiento ---
-    this.sneaking = input.sneak;
+    if (input.flyToggle && this.canFly) {
+      this.flying = !this.flying;
+      this.velocity.y = 0;
+    }
+    this.sneaking = input.sneak && !this.flying; // volando, Shift sirve para bajar
     if (input.sprint && input.forward > 0 && !this.sneaking) this.sprinting = true;
     if (input.forward <= 0 || this.sneaking) this.sprinting = false;
-    const speed = this.sneaking ? S.sneakSpeed : this.sprinting ? S.sprintSpeed : S.walkSpeed;
+    let speed = this.sneaking ? S.sneakSpeed : this.sprinting ? S.sprintSpeed : S.walkSpeed;
+    if (this.flying) speed = this.sprinting ? S.flySprintSpeed : S.flySpeed;
 
     // --- Velocidad horizontal deseada según la orientación ---
     let fx = 0, fz = 0;
@@ -57,32 +70,54 @@ export class Player {
       fx = (fx / len) * speed;
       fz = (fz / len) * speed;
     }
-    const control = this.onGround ? S.groundControl : S.airControl;
+    const control = this.flying ? S.flyControl : this.onGround ? S.groundControl : S.airControl;
     const k = 1 - Math.exp(-control * dt);
     this.velocity.x += (fx - this.velocity.x) * k;
     this.velocity.z += (fz - this.velocity.z) * k;
 
-    // --- Gravedad y salto ---
-    if (input.jump && this.onGround) {
-      this.velocity.y = Math.sqrt(2 * S.gravity * S.jumpHeight);
-      this.onGround = false;
+    // --- Gravedad y salto (o subir/bajar volando) ---
+    let dy;
+    if (this.flying) {
+      const vertical = ((input.jump ? 1 : 0) - (input.sneak ? 1 : 0)) * S.flyVerticalSpeed;
+      this.velocity.y += (vertical - this.velocity.y) * k;
+      dy = this.velocity.y * dt;
+    } else {
+      if (input.jump && this.onGround) {
+        this.velocity.y = Math.sqrt(2 * S.gravity * S.jumpHeight);
+        this.onGround = false;
+      }
+      const vy0 = this.velocity.y;
+      this.velocity.y = Math.max(-S.terminalVelocity, vy0 - S.gravity * dt);
+      // Media de la velocidad inicial y final: trayectoria exacta (salto de 1,25 justos).
+      dy = ((vy0 + this.velocity.y) / 2) * dt;
     }
-    const vy0 = this.velocity.y;
-    this.velocity.y = Math.max(-S.terminalVelocity, vy0 - S.gravity * dt);
 
     // --- Movimiento con colisiones, eje a eje ---
     let dx = this.velocity.x * dt;
-    // Media de la velocidad inicial y final: trayectoria exacta (salto de 1,25 justos).
-    let dy = ((vy0 + this.velocity.y) / 2) * dt;
     let dz = this.velocity.z * dt;
 
     // Agachado en el suelo: no dejar que se salga de un borde.
     if (this.sneaking && this.onGround) [dx, dz] = this.#clampToEdge(dx, dz, world);
 
+    const wasOnGround = this.onGround;
+    const fallSpeed = -this.velocity.y;
     const movedY = this.#sweep(1, dy, world);
     this.position.y += movedY;
     this.onGround = dy < 0 && movedY > dy;
     if (movedY !== dy) this.velocity.y = 0;
+
+    if (this.onGround) {
+      this.flying = false; // al tocar el suelo se deja de volar, como en el original
+      const below = this.blockBelow(world);
+      if (!wasOnGround) {
+        this.events.push({ type: 'land', block: below, speed: fallSpeed });
+        // Rebote en la nube (agachada no rebota, para poder quedarse encima).
+        if (BLOCKS[below]?.bounce && !this.sneaking && fallSpeed > S.minBounceSpeed) {
+          this.velocity.y = fallSpeed * S.bounceFactor;
+          this.onGround = false;
+        }
+      }
+    }
 
     const movedX = this.#sweep(0, dx, world);
     this.position.x += movedX;
@@ -92,6 +127,15 @@ export class Player {
     this.position.z += movedZ;
     if (movedZ !== dz) this.velocity.z = 0;
 
+    // Pasos: un sonido cada cierta distancia caminada por el suelo.
+    if (this.onGround) {
+      this.stepDistance += Math.hypot(movedX, movedZ);
+      if (this.stepDistance > S.stepDistance) {
+        this.stepDistance = 0;
+        this.events.push({ type: 'step', block: this.blockBelow(world), quiet: this.sneaking });
+      }
+    }
+
     // Chocar de frente contra una pared corta la carrera.
     if (this.sprinting && (movedX !== dx || movedZ !== dz) && Math.hypot(movedX, movedZ) < 0.5 * Math.hypot(dx, dz)) {
       this.sprinting = false;
@@ -100,6 +144,18 @@ export class Player {
     // Cámara: baja suavemente al agacharse.
     const targetEye = EYE_HEIGHT - (this.sneaking ? S.sneakEyeDrop : 0);
     this.eyeOffset += (targetEye - this.eyeOffset) * (1 - Math.exp(-20 * dt));
+  }
+
+  // Bloque sobre el que está de pie (0 si ninguno).
+  blockBelow(world) {
+    const id = world.getBlock(Math.floor(this.position.x), Math.floor(this.position.y - 0.05), Math.floor(this.position.z));
+    return Math.max(0, id);
+  }
+
+  // ¿El jugador ocupa la celda (x, y, z)? Para no colocar bloques dentro de él.
+  intersectsBlock(x, y, z) {
+    const [x0, y0, z0, x1, y1, z1] = this.#box();
+    return x0 < x + 1 && x1 > x && y0 < y + 1 && y1 > y && z0 < z + 1 && z1 > z;
   }
 
   // Caja del jugador desplazada (dx, dy, dz).

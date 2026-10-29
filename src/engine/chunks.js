@@ -26,6 +26,9 @@ export class ChunkManager {
     this.material = material;
     this.settings = settings;
     this.chunks = new Map(); // clave "cx,cz" → chunk
+    // Chunks que Gina ha modificado: se conservan aunque se descarguen, para
+    // no perder lo construido (el guardado en IndexedDB llega en la fase 3).
+    this.edited = new Map(); // clave → Uint8Array de bloques
     this.jobs = 0;
     this.center = { cx: NaN, cz: NaN };
     // Se generan datos un anillo más allá de lo que se dibuja, porque una
@@ -58,6 +61,37 @@ export class ChunkManager {
   isSolid(x, y, z) {
     const id = this.getBlock(x, y, z);
     return id < 0 || IS_SOLID[id] === 1;
+  }
+
+  // Cambia un bloque. Devuelve false si no se puede (fuera del mundo o sin cargar).
+  setBlock(x, y, z, id) {
+    if (y < 0 || y >= CHUNK_HEIGHT) return false;
+    const cx = Math.floor(x / CHUNK_SIZE);
+    const cz = Math.floor(z / CHUNK_SIZE);
+    const chunk = this.getChunk(cx, cz);
+    if (!chunk?.blocks) return false;
+    const lx = x - cx * CHUNK_SIZE;
+    const lz = z - cz * CHUNK_SIZE;
+    chunk.blocks[blockIndex(lx, y, lz)] = id;
+    this.edited.set(chunkKey(cx, cz), chunk.blocks);
+
+    // Re-mallar este chunk y los vecinos cuyo borde acolchado contiene el bloque.
+    const dxs = [0, lx === 0 ? -1 : lx === CHUNK_SIZE - 1 ? 1 : null].filter((d) => d !== null);
+    const dzs = [0, lz === 0 ? -1 : lz === CHUNK_SIZE - 1 ? 1 : null].filter((d) => d !== null);
+    for (const dx of dxs) {
+      for (const dz of dzs) {
+        const neighbor = this.getChunk(cx + dx, cz + dz);
+        if (neighbor?.blocks) this.#remeshNow(neighbor);
+      }
+    }
+    return true;
+  }
+
+  // Re-mallado prioritario tras una edición: no espera a la cola normal y,
+  // si ya había un mallado en curso, su resultado se descarta por versión.
+  #remeshNow(chunk) {
+    chunk.needsMesh = true;
+    if (this.#neighborsReady(chunk.cx, chunk.cz)) this.#buildMesh(chunk, true);
   }
 
   // Altura del bloque sólido más alto de una columna (o -1).
@@ -106,8 +140,13 @@ export class ChunkManager {
   }
 
   #generate(cx, cz) {
+    const key = chunkKey(cx, cz);
     const chunk = { cx, cz, blocks: null, mesh: null, needsMesh: true, meshing: false, version: 0 };
-    this.chunks.set(chunkKey(cx, cz), chunk);
+    this.chunks.set(key, chunk);
+    if (this.edited.has(key)) {
+      chunk.blocks = this.edited.get(key); // ya modificado: no regenerar
+      return;
+    }
     this.jobs++;
     this.pool.run({ type: 'generate', cx, cz, seed: this.settings.seed }).then(({ blocks }) => {
       this.jobs--;
@@ -150,15 +189,16 @@ export class ChunkManager {
     return volume;
   }
 
-  #buildMesh(chunk) {
+  #buildMesh(chunk, urgent = false) {
     chunk.needsMesh = false;
     chunk.meshing = true;
     const version = ++chunk.version;
     const volume = this.#buildPaddedVolume(chunk.cx, chunk.cz);
     this.jobs++;
-    this.pool.run({ type: 'mesh', volume }, [volume.buffer]).then(({ mesh }) => {
+    this.pool.run({ type: 'mesh', volume }, [volume.buffer], urgent).then(({ mesh }) => {
       this.jobs--;
-      chunk.meshing = false;
+      if (version === chunk.version) chunk.meshing = false;
+      // Descartar si se descargó o si ya hay un mallado más reciente en camino.
       if (this.getChunk(chunk.cx, chunk.cz) !== chunk || version !== chunk.version) return;
       this.#setMesh(chunk, mesh);
     });

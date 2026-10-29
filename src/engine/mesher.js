@@ -8,7 +8,7 @@
 // los bordes (y, en la fase 3, calcular el ambient occlusion).
 
 import { CHUNK_SIZE, CHUNK_HEIGHT } from './constants.js';
-import { IS_OPAQUE, IS_CUTOUT, FACE_TEXTURE } from '../blocks/registry.js';
+import { IS_OPAQUE, IS_CUTOUT, CULL_SAME, FACE_TEXTURE } from '../blocks/registry.js';
 
 export const PAD = CHUNK_SIZE + 2;
 export const PADDED_VOLUME = PAD * PAD * CHUNK_HEIGHT;
@@ -94,8 +94,10 @@ export function meshChunk(volume) {
           else neighbor = volume[paddedIndex(pos[0] + step[0], ny, pos[2] + step[2])];
 
           // Cara visible si el vecino no es opaco. Entre dos bloques iguales
-          // solo se dibuja si son "recortados" (hojas), como en el original.
-          if (IS_OPAQUE[neighbor] || (neighbor === block && !IS_CUTOUT[block])) continue;
+          // solo se dibuja en las hojas (recortadas y sin CULL_SAME), como en
+          // el original; entre dos cristales no.
+          if (IS_OPAQUE[neighbor]) continue;
+          if (neighbor === block && (!IS_CUTOUT[block] || CULL_SAME[block])) continue;
           mask[n] = FACE_TEXTURE[block * 6 + face] + 1;
         }
       }

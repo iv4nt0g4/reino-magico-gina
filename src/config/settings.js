@@ -25,6 +25,25 @@ export const SETTINGS = {
   sneakEyeDrop: 0.3, // cuánto baja la cámara al agacharse
   doubleTapMs: 300,
 
+  // Vuelo (modo creativo)
+  flySpeed: 10.92,
+  flySprintSpeed: 21.78,
+  flyVerticalSpeed: 7.5,
+  flyControl: 10,
+
+  // Nube: rebote al caer encima
+  bounceFactor: 0.8, // fracción de la velocidad de caída que se conserva
+  minBounceSpeed: 4, // por debajo de esta velocidad no rebota
+
+  // Construir
+  reach: 5, // bloques de alcance
+  breakRepeatMs: 250, // al mantener pulsado el botón izquierdo
+  placeRepeatMs: 200, // al mantener pulsado el botón derecho
+
+  // Sonido
+  volume: 0.6,
+  stepDistance: 1.7, // bloques recorridos entre dos pasos
+
   // Cielo (fase 1: color fijo; el ciclo día/noche llega en la fase 3)
   skyColor: 0x9fd8ff,
 };
