@@ -31,6 +31,13 @@ export const SETTINGS = {
   flyVerticalSpeed: 7.5,
   flyControl: 10,
 
+  // Agua
+  swimSpeedFactor: 0.5, // velocidad al nadar respecto a caminar
+  swimUpSpeed: 3.5, // con Espacio pulsado
+  sinkSpeed: 1.6, // sin pulsar nada se hunde despacio
+  swimControl: 5,
+  swimExitSpeed: 7.5, // impulso al saltar contra la orilla para salir
+
   // Nube: rebote al caer encima
   bounceFactor: 0.8, // fracción de la velocidad de caída que se conserva
   minBounceSpeed: 4, // por debajo de esta velocidad no rebota
@@ -44,6 +51,11 @@ export const SETTINGS = {
   volume: 0.6,
   stepDistance: 1.7, // bloques recorridos entre dos pasos
 
-  // Cielo (fase 1: color fijo; el ciclo día/noche llega en la fase 3)
-  skyColor: 0x9fd8ff,
+  // Día y noche
+  dayLengthSeconds: 20 * 60, // un día completo
+  startTime: 0.04, // hora al crear un mundo (0 = amanecer, 0,25 = mediodía, 0,5 = atardecer)
+  nightDaylight: 0.22, // cuánta luz de cielo queda de noche (no se pone negro del todo)
+
+  // Guardado
+  autosaveSeconds: 30,
 };

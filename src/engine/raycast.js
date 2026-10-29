@@ -1,5 +1,7 @@
 // Raycast de bloques: recorre las celdas que atraviesa un rayo (algoritmo
-// DDA de Amanatides y Woo) hasta encontrar un bloque que no sea aire.
+// DDA de Amanatides y Woo) hasta encontrar un bloque que no sea aire ni agua.
+
+import { IS_LIQUID } from '../blocks/registry.js';
 
 // Devuelve { x, y, z, id, normal: [nx, ny, nz] } o null si no hay nada al alcance.
 // `normal` indica la cara por la que entró el rayo (donde se coloca un bloque nuevo).
@@ -25,7 +27,7 @@ export function raycastBlock(world, origin, direction, maxDistance) {
   while (t <= maxDistance) {
     const id = world.getBlock(x, y, z);
     if (id < 0) return null; // chunk sin cargar
-    if (id > 0) return { x, y, z, id, normal: [...normal] };
+    if (id > 0 && !IS_LIQUID[id]) return { x, y, z, id, normal: [...normal] };
 
     // Avanzar al borde de celda más cercano.
     normal[0] = normal[1] = normal[2] = 0;

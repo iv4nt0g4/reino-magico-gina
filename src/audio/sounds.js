@@ -11,6 +11,7 @@ const RECIPES = {
   snow: { noise: { type: 'lowpass', freq: 900, q: 0.8 }, dur: 0.18, gain: 2.2 },
   glass: { tone: { freq: 1900, wave: 'sine', harmonic: 1.5 }, noise: { type: 'highpass', freq: 5000, q: 0.5 }, dur: 0.22, gain: 0.5 },
   wool: { noise: { type: 'lowpass', freq: 600, q: 0.6 }, dur: 0.1, gain: 2 },
+  water: { noise: { type: 'lowpass', freq: 1100, q: 0.9 }, tone: { freq: 420, wave: 'sine' }, dur: 0.3, gain: 1.4 },
 };
 
 const ACTIONS = {
@@ -18,6 +19,7 @@ const ACTIONS = {
   place: { gain: 0.55, dur: 1.2, pitch: 0.85 },
   break: { gain: 0.75, dur: 1.8, pitch: 0.7 },
   land: { gain: 0.4, dur: 1.4, pitch: 0.8 },
+  splash: { gain: 0.6, dur: 2, pitch: 0.9 },
 };
 
 export class Sounds {

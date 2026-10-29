@@ -39,6 +39,14 @@ export function getBlockIcon(id) {
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
+  // Plantas y antorcha: el dibujo plano, como en el original.
+  if (block.shape === 'cross') {
+    ctx.drawImage(textureCanvas(block.textures[0]), 0, 0, S, S);
+    const url = canvas.toDataURL();
+    cache.set(id, url);
+    return url;
+  }
+
   // Cada cara en su propio canvas para que el oscurecido no afecte a las demás.
   const faces = [
     // [cara, transformación (ejes x, y y origen), oscuridad]

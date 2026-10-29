@@ -48,6 +48,25 @@ export const CATEGORIES = [
   { key: 'magic', icon: '✨', label: 'Magia' },
 ];
 
+// Propiedades comunes de plantas (y antorcha) y del agua.
+const PLANT = {
+  shape: 'cross',
+  solid: false,
+  opaque: false,
+  cutout: true,
+  needsSupport: true,
+  sound: 'grass',
+};
+const LIQUID = {
+  shape: 'liquid',
+  solid: false,
+  opaque: false,
+  lightOpacity: 2,
+  replaceable: true,
+  sound: 'water',
+  category: null,
+};
+
 // Atajos para definir texturas por cara.
 const all = (t) => [t, t, t, t, t, t];
 const column = (side, top, bottom = top) => [side, side, top, bottom, side, side];
@@ -61,7 +80,13 @@ const column = (side, top, bottom = top) => [side, side, top, bottom, side, side
 //   cullSame:  entre dos bloques iguales no se dibuja la cara (cristal)
 //   bounce:    el jugador rebota al caer encima (nube)
 //   sound:     familia de sonidos de pasos y golpes
-//   category:  pestaña del catálogo creativo
+//   category:  pestaña del catálogo creativo (null = no aparece)
+//   shape:     'cube', 'cross' (plantas y antorcha: dos planos en X) o 'liquid' (agua)
+//   light:     luz que emite (0–15)
+//   lightOpacity: cuánta luz frena (0 = transparente, 15 = opaco)
+//   replaceable: se puede colocar otro bloque encima de su hueco (hierba alta, agua)
+//   needsSupport: desaparece si se rompe el bloque de debajo (plantas, antorcha)
+//   liquidLevel: en el agua, 0 = fuente y 1–3 = agua que fluye (más baja cuanto más lejos)
 const DEFINITIONS = [
   { name: 'air', label: 'Aire', solid: false, opaque: false, category: null },
 
@@ -75,11 +100,11 @@ const DEFINITIONS = [
   { name: 'snow', label: 'Nieve', faces: all('snow'), sound: 'snow' },
   { name: 'ice', label: 'Hielo', faces: all('ice'), sound: 'glass' },
   { name: 'oak_log', label: 'Tronco de roble', faces: column('oak_log', 'log_top'), sound: 'wood' },
-  { name: 'oak_leaves', label: 'Hojas de roble', faces: all('oak_leaves'), opaque: false, cutout: true, sound: 'grass' },
+  { name: 'oak_leaves', label: 'Hojas de roble', faces: all('oak_leaves'), opaque: false, cutout: true, lightOpacity: 1, sound: 'grass' },
   { name: 'birch_log', label: 'Tronco de abedul', faces: column('birch_log', 'log_top'), sound: 'wood' },
-  { name: 'birch_leaves', label: 'Hojas de abedul', faces: all('birch_leaves'), opaque: false, cutout: true, sound: 'grass' },
+  { name: 'birch_leaves', label: 'Hojas de abedul', faces: all('birch_leaves'), opaque: false, cutout: true, lightOpacity: 1, sound: 'grass' },
   { name: 'cherry_log', label: 'Tronco de cerezo', faces: column('cherry_log', 'log_top'), sound: 'wood' },
-  { name: 'cherry_leaves', label: 'Hojas de cerezo', faces: all('cherry_leaves'), opaque: false, cutout: true, sound: 'grass' },
+  { name: 'cherry_leaves', label: 'Hojas de cerezo', faces: all('cherry_leaves'), opaque: false, cutout: true, lightOpacity: 1, sound: 'grass' },
   { name: 'mushroom_cap', label: 'Sombrero de seta', faces: all('mushroom_cap'), sound: 'wool' },
   { name: 'mushroom_stem', label: 'Tallo de seta', faces: all('mushroom_stem'), sound: 'wool' },
 
@@ -116,12 +141,26 @@ const DEFINITIONS = [
 
   // --- Magia ---
   { name: 'gold', label: 'Oro', faces: all('gold'), sound: 'stone', category: 'magic' },
-  { name: 'shiny_stone', label: 'Piedra con brillo', faces: all('shiny_stone'), sound: 'glass', category: 'magic' },
+  { name: 'shiny_stone', label: 'Piedra con brillo', faces: all('shiny_stone'), light: 15, sound: 'glass', category: 'magic' },
   { name: 'rainbow', label: 'Arcoíris', faces: column('rainbow', 'rainbow_top'), sound: 'wool', category: 'magic' },
-  { name: 'star', label: 'Estrella', faces: all('star'), sound: 'glass', category: 'magic' },
+  { name: 'star', label: 'Estrella', faces: all('star'), light: 14, sound: 'glass', category: 'magic' },
   { name: 'cloud', label: 'Nube', faces: all('cloud'), bounce: true, sound: 'wool', category: 'magic' },
   { name: 'candy', label: 'Caramelo', faces: all('candy'), sound: 'glass', category: 'magic' },
   { name: 'cookie', label: 'Galleta', faces: all('cookie'), sound: 'sand', category: 'magic' },
+
+  // --- Fase 3: agua, plantas y luces ---
+  { name: 'water', label: 'Agua', faces: all('water'), ...LIQUID, liquidLevel: 0, category: 'nature' },
+  { name: 'water_flow_1', label: 'Agua', faces: all('water'), ...LIQUID, liquidLevel: 1 },
+  { name: 'water_flow_2', label: 'Agua', faces: all('water'), ...LIQUID, liquidLevel: 2 },
+  { name: 'water_flow_3', label: 'Agua', faces: all('water'), ...LIQUID, liquidLevel: 3 },
+  { name: 'tall_grass', label: 'Hierba alta', faces: all('tall_grass'), ...PLANT, replaceable: true },
+  { name: 'flower_red', label: 'Flor roja', faces: all('flower_red'), ...PLANT },
+  { name: 'flower_yellow', label: 'Flor amarilla', faces: all('flower_yellow'), ...PLANT },
+  { name: 'flower_blue', label: 'Flor azul', faces: all('flower_blue'), ...PLANT },
+  { name: 'flower_pink', label: 'Flor rosa', faces: all('flower_pink'), ...PLANT },
+  { name: 'flower_white', label: 'Margarita', faces: all('flower_white'), ...PLANT },
+  { name: 'torch', label: 'Antorcha', faces: all('torch'), ...PLANT, light: 14, sound: 'wood', category: 'building' },
+  { name: 'lantern', label: 'Farolillo', faces: column('lantern', 'lantern_top'), light: 15, sound: 'glass', category: 'building' },
 ];
 
 // Lista de texturas, en orden de aparición: el índice es la capa del DataArrayTexture.
@@ -137,6 +176,12 @@ export const BLOCKS = DEFINITIONS.map((def, id) => ({
   bounce: false,
   sound: 'stone',
   category: 'nature',
+  shape: 'cube',
+  light: 0,
+  lightOpacity: def.opaque === false ? 0 : 15,
+  replaceable: false,
+  needsSupport: false,
+  liquidLevel: -1,
   ...def,
   textures: def.faces ?? null, // nombres de textura por cara
   faces: def.faces ? def.faces.map((t) => TEX[t]) : null, // capas por cara
@@ -150,5 +195,14 @@ export const IS_SOLID = Uint8Array.from(BLOCKS, (b) => (b.solid ? 1 : 0));
 export const IS_OPAQUE = Uint8Array.from(BLOCKS, (b) => (b.opaque ? 1 : 0));
 export const IS_CUTOUT = Uint8Array.from(BLOCKS, (b) => (b.cutout ? 1 : 0));
 export const CULL_SAME = Uint8Array.from(BLOCKS, (b) => (b.cullSame ? 1 : 0));
+export const LIGHT_EMISSION = Uint8Array.from(BLOCKS, (b) => b.light);
+export const LIGHT_OPACITY = Uint8Array.from(BLOCKS, (b) => b.lightOpacity);
+export const SHAPE_CUBE = 0;
+export const SHAPE_CROSS = 1;
+export const SHAPE_LIQUID = 2;
+export const SHAPE = Uint8Array.from(BLOCKS, (b) => ['cube', 'cross', 'liquid'].indexOf(b.shape));
+export const IS_REPLACEABLE = Uint8Array.from(BLOCKS, (b) => (b.replaceable ? 1 : 0));
+export const IS_LIQUID = Uint8Array.from(BLOCKS, (b) => (b.shape === 'liquid' ? 1 : 0));
+export const LIQUID_LEVEL = Int8Array.from(BLOCKS, (b) => b.liquidLevel);
 export const FACE_TEXTURE = new Int16Array(BLOCKS.length * 6).fill(-1);
 BLOCKS.forEach((b) => b.faces?.forEach((t, f) => (FACE_TEXTURE[b.id * 6 + f] = t)));

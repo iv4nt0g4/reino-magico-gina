@@ -19,6 +19,7 @@ Abre la dirección que muestra Vite (normalmente http://localhost:5173) en Chrom
 | Shift | Agacharse (no se cae por los bordes) |
 | Ctrl o doble W | Correr |
 | Doble Espacio | Volar (Espacio sube, Shift baja; al tocar el suelo deja de volar) |
+| Espacio en el agua | Nadar hacia arriba (contra la orilla, salir del agua) |
 | Clic izquierdo | Romper bloque (mantener para seguir rompiendo) |
 | Clic derecho | Colocar bloque (mantener para seguir colocando) |
 | Clic central | Coger el bloque apuntado para la barra rápida |
@@ -27,9 +28,21 @@ Abre la dirección que muestra Vite (normalmente http://localhost:5173) en Chrom
 | Esc | Pausa |
 | F3 | Panel de depuración (fps, posición, chunks) |
 
-Depuración: `?pos=x,z` en la URL hace aparecer al jugador en otra columna del mundo
-(por ejemplo `?pos=-1880,-120` para ver montañas nevadas). Con `npm run dev`, la consola del
-navegador tiene `window.__juego` (jugador, mundo, barra rápida, sonidos) para depurar.
+## Partida guardada
+
+La partida se guarda sola en el navegador (IndexedDB): cada 30 segundos, al pausar con Esc y al
+cerrar o cambiar de pestaña. Se guardan los chunks modificados, la posición, la barra rápida y la
+hora del día. El disquete 💾 de la esquina aparece un momento cada vez que se guarda.
+
+Para empezar un mundo nuevo (hasta que haya un menú para ello en la fase 10): en Chrome, F12 →
+Application → IndexedDB → `reino-magico-gina` → *Delete database*, y recargar.
+
+## Depuración
+
+`?pos=x,z` en la URL hace aparecer al jugador en otra columna del mundo
+(por ejemplo `?pos=-1880,-120` para ver montañas nevadas o `?pos=-75,-141` para un lago). Con
+`npm run dev`, la consola del navegador tiene `window.__juego` (jugador, mundo, agua, cielo, barra
+rápida, sonidos) para depurar; por ejemplo `__juego.sky.time = 0.75` pone la noche.
 
 ## Compilar
 

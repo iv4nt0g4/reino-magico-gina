@@ -4,11 +4,11 @@
 
 import * as THREE from 'three';
 import { raycastBlock } from './raycast.js';
-import { BLOCKS } from '../blocks/registry.js';
+import { BLOCKS, IS_REPLACEABLE, IS_SOLID, IS_LIQUID } from '../blocks/registry.js';
 
 export class Interaction {
-  constructor({ scene, camera, world, player, hotbar, sounds, settings }) {
-    Object.assign(this, { camera, world, player, hotbar, sounds, settings });
+  constructor({ scene, camera, world, water, player, hotbar, sounds, settings }) {
+    Object.assign(this, { camera, world, water, player, hotbar, sounds, settings });
     this.target = null;
     this.nextBreak = 0;
     this.nextPlace = 0;
@@ -61,6 +61,10 @@ export class Interaction {
     if (!t) return false;
     if (!this.world.setBlock(t.x, t.y, t.z, 0)) return false;
     this.sounds.play(BLOCKS[t.id].sound, 'break');
+    // Flores y antorchas encima se caen con el bloque.
+    const above = this.world.getBlock(t.x, t.y + 1, t.z);
+    if (above > 0 && BLOCKS[above].needsSupport) this.world.setBlock(t.x, t.y + 1, t.z, 0);
+    this.water.notify(t.x, t.y, t.z); // el agua de al lado puede entrar en el hueco
     this.#updateTarget();
     return true;
   }
@@ -69,13 +73,21 @@ export class Interaction {
     const t = this.target;
     const id = this.hotbar.selectedBlock();
     if (!t || !id) return false;
-    const x = t.x + t.normal[0];
-    const y = t.y + t.normal[1];
-    const z = t.z + t.normal[2];
-    if (this.world.getBlock(x, y, z) !== 0) return false; // ocupado o sin cargar
+    // Sobre hierba alta se coloca en su sitio (la sustituye); si no, en la cara apuntada.
+    const replaceTarget = IS_REPLACEABLE[t.id];
+    const x = replaceTarget ? t.x : t.x + t.normal[0];
+    const y = replaceTarget ? t.y : t.y + t.normal[1];
+    const z = replaceTarget ? t.z : t.z + t.normal[2];
+    const existing = this.world.getBlock(x, y, z);
+    if (existing !== 0 && !IS_REPLACEABLE[existing]) return false; // ocupado o sin cargar
     if (BLOCKS[id].solid && this.player.intersectsBlock(x, y, z)) return false; // no encerrarse
+    if (BLOCKS[id].needsSupport) {
+      const below = this.world.getBlock(x, y - 1, z);
+      if (below < 0 || !IS_SOLID[below] || IS_LIQUID[below]) return false; // las flores necesitan suelo
+    }
     if (!this.world.setBlock(x, y, z, id)) return false;
     this.sounds.play(BLOCKS[id].sound, 'place');
+    this.water.notify(x, y, z);
     this.#updateTarget();
     return true;
   }
