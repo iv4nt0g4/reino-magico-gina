@@ -174,7 +174,7 @@ function backYard(f, rng, c, depth) {
   const r = rng.next();
   const mid = Math.floor((c.u0 + c.u1) / 2);
   if (r < 0.4) {
-    f.b.tree(...worldXYZ(f, mid, F, start + 1), rng.pick(['oak', 'cherry', 'birch']), 4);
+    f.tree(mid, F, start + 1, rng.pick(['oak', 'cherry', 'birch']), 4);
   } else if (r < 0.75) {
     // Huerto: filas de plantas sobre tierra.
     for (let u = c.u0; u <= c.u1; u += 2) {
@@ -190,29 +190,22 @@ function backYard(f, rng, c, depth) {
   }
 }
 
-const worldXYZ = (f, u, y, v) => {
-  const [x, z] = f.world(u, v);
-  return [x, y, z];
-};
-
 // Casa-torre de cuento: torre redonda con tejado cónico.
 function towerHouse(f, rng, width, depth, name) {
   const cu = Math.floor(width / 2);
   const cv = 5;
-  const [x, z] = f.world(cu, cv);
-  const b = f.b;
   const wall = rng.pick(['pastel_pink', 'pastel_lilac', 'pastel_sky', 'white_stone']);
-  b.cylinder(x, G, z, 3, 8, wall, { hollow: true });
-  b.cylinder(x, G, z, 2, 1, 'planks');
-  b.cylinder(x, G + 7, z, 3, 1, 'planks');
-  b.cone(x, G + 8, z, 4, 8, rng.pick(ROOFS));
+  f.cylinder(cu, G, cv, 3, 8, wall, { hollow: true });
+  f.cylinder(cu, G, cv, 2, 1, 'planks');
+  f.cylinder(cu, G + 7, cv, 3, 1, 'planks');
+  f.cone(cu, G + 8, cv, 4, 8, rng.pick(ROOFS));
   // Ventanas a los lados y detrás.
   for (const [du, dv] of [[3, 0], [-3, 0], [0, 3]]) f.fill(cu + du, F + 1, cv + dv, cu + du, F + 2, cv + dv, 'glass');
   f.fill(cu - 1, F + 4, cv - 3, cu + 1, F + 4, cv - 3, 'glass');
   f.door(cu, F, cv - 3, name);
   for (let v = 0; v < cv - 3; v++) f.set(cu, G, v, 'cobblestone');
   // Dentro: lámpara, cama y estantería.
-  b.set(x, G + 6, z, 'lantern');
+  f.set(cu, G + 6, cv, 'lantern');
   f.set(cu + 2, F, cv, 'wool_white');
   f.set(cu + 2, F, cv + 1, rng.pick(BEDS));
   f.fill(cu - 2, F, cv + 1, cu - 2, F + 1, cv + 1, 'bookshelf');
@@ -225,19 +218,17 @@ function towerHouse(f, rng, width, depth, name) {
 function mushroomHouse(f, rng, width, depth, name) {
   const cu = Math.floor(width / 2);
   const cv = 5;
-  const [x, z] = f.world(cu, cv);
-  const b = f.b;
-  b.cylinder(x, G, z, 2, 5, 'mushroom_stem', { hollow: true });
-  b.cylinder(x, G, z, 1, 1, 'planks');
-  b.cylinder(x, G + 5, z, 4, 2, 'mushroom_cap');
-  b.cylinder(x, G + 7, z, 3, 1, 'mushroom_cap');
-  b.cylinder(x, G + 8, z, 2, 1, 'mushroom_cap');
+  f.cylinder(cu, G, cv, 2, 5, 'mushroom_stem', { hollow: true });
+  f.cylinder(cu, G, cv, 1, 1, 'planks');
+  f.cylinder(cu, G + 5, cv, 4, 2, 'mushroom_cap');
+  f.cylinder(cu, G + 7, cv, 3, 1, 'mushroom_cap');
+  f.cylinder(cu, G + 8, cv, 2, 1, 'mushroom_cap');
   f.set(cu, F + 3, cv - 2, 'glass'); // ventanita redonda sobre la puerta
   f.set(cu + 2, F + 1, cv, 'glass');
   f.set(cu - 2, F + 1, cv, 'glass');
   f.door(cu, F, cv - 2, name);
   for (let v = 0; v < cv - 2; v++) f.set(cu, G, v, 'gravel');
-  b.set(x, G + 4, z, 'lantern');
+  f.set(cu, G + 4, cv, 'lantern');
   // Setas pequeñas y flores alrededor.
   for (const [du, dv] of [[-3, 1], [3, 2], [-3, 4]]) f.set(cu + du, F, dv, rng.pick(FLOWERS));
   backYard(f, rng, { u0: 1, u1: width - 2, v1: cv + 2 }, depth);

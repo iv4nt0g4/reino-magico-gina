@@ -47,8 +47,8 @@ export function ginaHouse(f, rng, { width, depth }) {
   f.fill(su0, F + 4, v0 + 2, su0, F + 4, v0 + 5, 'oak_log');
   f.fill(su0, F + 1, v0 + 3, su0, F + 1, v0 + 4, 'planks');
   // Cerezo en el otro lado y en el patio de atrás.
-  f.b.tree(...xyz(f, width - 2, F, v0 + 3), 'cherry', 5);
-  f.b.tree(...xyz(f, door + 3, F, v1 + 3), 'cherry', 4);
+  f.tree(width - 2, F, v0 + 3, 'cherry', 5);
+  f.tree(door + 3, F, v1 + 3, 'cherry', 4);
 
   // La habitación de Gina (planta alta): baúl de juguetes, una estrella que
   // brilla y un cuadro con un corazón en la pared del fondo.
@@ -58,8 +58,3 @@ export function ginaHouse(f, rng, { width, depth }) {
   f.set(door, y + 3, v0 + 4, 'star');
   f.pattern(door - 2, y + 3, v1, ['.p.p.', 'ppppp', '.ppp.', '..p..'], { p: 'wool_pink' });
 }
-
-const xyz = (f, u, y, v) => {
-  const [x, z] = f.world(u, v);
-  return [x, y, z];
-};

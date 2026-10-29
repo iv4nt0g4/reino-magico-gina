@@ -57,8 +57,19 @@ plantilla por edificio o zona: castillo, casas y tiendas (`house.js`), ayuntamie
 Carrusel, estación, casa de Gina, granja del molino y objetos de ambiente (`props.js`). El plano
 de la ciudad y las zonas reservadas para la fase 6 están en `city.js`.
 
-Cada casa registra su puerta y sus escaleras; una prueba comprueba que todas las puertas tienen
-paso y que todas las escaleras se pueden subir con la física real del juego:
+## Aldeas y rincones
+
+Fuera de la ciudad (a partir de unos 190 bloques del centro) el mapa tiene **aldeas** de tres tipos
+—granjeros, hadas y cerezos— y **rincones**: merenderos, círculos de setas y casitas sueltas
+(`src/world/villages.js`). Se generan con el terreno, igual cada vez para el mismo mundo, solo en
+sitios llanos sin agua ni nieve; cada casa se apoya en su terreno y los caminos de grava lo siguen.
+Para visitar algunas: `?pos=-210,167` (cerezos), `?pos=-43,349` (hadas), `?pos=-191,-211` (granjeros).
+
+## Comprobación de puertas y escaleras
+
+Cada casa registra su puerta y sus escaleras; una prueba comprueba, en la ciudad y en las aldeas
+cercanas (sobre el terreno real), que todas las puertas tienen paso y que todas las escaleras se
+pueden subir con la física real del juego:
 
 ```bash
 npm run verificar

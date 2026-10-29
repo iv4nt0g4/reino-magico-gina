@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "verificar": "node scripts/verificar-ciudad.mjs"
+    "verificar": "node scripts/verificar.mjs"
   },
   "dependencies": {
     "simplex-noise": "^4.0.3",
