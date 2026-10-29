@@ -43,6 +43,14 @@ export class ChunkManager {
     );
   }
 
+  // Cambia la distancia de visión (en chunks): lo que quede lejos se descarga.
+  setRenderDistance(distance) {
+    if (distance === this.settings.renderDistance && this.offsets) return;
+    this.settings.renderDistance = distance;
+    this.offsets = spiralOffsets(distance + 1);
+    this.center = { cx: NaN, cz: NaN }; // fuerza a revisar qué descargar
+  }
+
   // ---- Consulta de bloques (coordenadas de mundo) ----
 
   getChunk(cx, cz) {

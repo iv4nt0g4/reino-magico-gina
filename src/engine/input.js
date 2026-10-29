@@ -1,9 +1,15 @@
-// Entrada de teclado y ratón (escritorio). El ratón usa pointer lock para
-// mirar alrededor como en un juego en primera persona.
+// Entrada de teclado y ratón (ordenador, o tablet con teclado y ratón).
+//
+// Para mirar alrededor se captura el ratón (pointer lock), como en cualquier
+// juego en primera persona. Si el navegador no lo permite (algunas tablets),
+// hay un plan B: se juega igual, se mira moviendo el ratón con el cursor
+// oculto y, además, con las flechas del teclado, que funcionan siempre.
 
 const GAME_KEYS = new Set([
   'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE', 'Space', 'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight',
+  'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
 ]);
+const LOCK_TIMEOUT_MS = 600; // si en este tiempo no se captura el ratón, plan B
 
 export class Input {
   constructor(canvas, settings) {
@@ -13,14 +19,17 @@ export class Input {
     this.buttons = new Set(); // botones del ratón pulsados (0 izq, 1 central, 2 der)
     this.mouseDX = 0;
     this.mouseDY = 0;
-    this.locked = false;
+    this.active = false; // el juego recibe los controles (ratón capturado o plan B)
+    this.fallback = false; // jugando con el plan B (sin capturar el ratón)
+    this.lockWorked = false; // la captura del ratón ha funcionado alguna vez
+    this.lockFailed = false; // en este navegador no funciona: se usa siempre el plan B
     this.sprintTap = false; // doble pulsación de W detectada
     this.flyTap = false; // doble pulsación de Espacio detectada
     this.lastTap = {}; // código de tecla → instante de la última pulsación
 
     // Avisos para el juego
     this.onToggleDebug = null;
-    this.onLockChange = null;
+    this.onLockChange = null; // (activo: boolean)
     this.onHotbarSelect = null; // (índice 0–8)
     this.onHotbarScroll = null; // (+1 / -1)
     this.onOpenCatalog = null;
@@ -30,36 +39,62 @@ export class Input {
     window.addEventListener('keyup', (e) => this.keys.delete(e.code));
     window.addEventListener('blur', () => this.#releaseAll());
     document.addEventListener('mousemove', (e) => {
-      if (!this.locked) return;
+      if (!this.active) return;
       this.mouseDX += e.movementX;
       this.mouseDY += e.movementY;
     });
     document.addEventListener('mousedown', (e) => {
-      if (!this.locked) return;
+      if (!this.active) return;
       e.preventDefault();
       this.buttons.add(e.button);
       this.onMouseDown?.(e.button);
     });
     document.addEventListener('mouseup', (e) => this.buttons.delete(e.button));
-    document.addEventListener('contextmenu', (e) => this.locked && e.preventDefault());
+    document.addEventListener('contextmenu', (e) => this.active && e.preventDefault());
     document.addEventListener(
       'wheel',
       (e) => {
-        if (!this.locked || e.deltaY === 0) return;
+        if (!this.active || e.deltaY === 0) return;
         this.onHotbarScroll?.(Math.sign(e.deltaY));
       },
       { passive: true },
     );
     document.addEventListener('pointerlockchange', () => {
-      this.locked = document.pointerLockElement === canvas;
-      if (!this.locked) this.#releaseAll();
-      this.onLockChange?.(this.locked);
+      const locked = document.pointerLockElement === canvas;
+      if (locked) {
+        this.lockWorked = true;
+        this.#stopFallback(false);
+        this.#setActive(true);
+      } else if (!this.fallback) {
+        this.#setActive(false);
+      }
     });
+  }
+
+  #setActive(active) {
+    if (this.active === active) return;
+    this.active = active;
+    if (!active) this.#releaseAll();
+    this.onLockChange?.(active);
   }
 
   #releaseAll() {
     this.keys.clear();
     this.buttons.clear();
+  }
+
+  // Plan B: jugar sin capturar el ratón (el cursor se oculta mientras tanto).
+  #startFallback() {
+    this.fallback = true;
+    document.body.classList.add('mouse-hidden');
+    this.#setActive(true);
+  }
+
+  #stopFallback(notify = true) {
+    if (!this.fallback) return;
+    this.fallback = false;
+    document.body.classList.remove('mouse-hidden');
+    if (notify) this.#setActive(false);
   }
 
   // ¿Segunda pulsación rápida de la misma tecla?
@@ -71,8 +106,13 @@ export class Input {
   }
 
   #keyDown(e) {
-    if (!this.locked) return;
+    if (!this.active) return;
     if (GAME_KEYS.has(e.code)) e.preventDefault(); // evita atajos del navegador (Ctrl+S, Espacio...)
+    // Con el ratón capturado, Esc lo suelta el propio navegador; con el plan B, lo hacemos aquí.
+    if (e.code === 'Escape' && this.fallback) {
+      this.#stopFallback();
+      return;
+    }
     if (e.code === 'F3') {
       e.preventDefault();
       this.onToggleDebug?.();
@@ -90,18 +130,46 @@ export class Input {
     this.keys.add(e.code);
   }
 
-  // Captura el ratón. Devuelve una promesa que falla si el navegador no lo
-  // permite (por ejemplo, si se pide demasiado pronto tras salir con Esc).
+  // Empieza a jugar: intenta capturar el ratón y, si este navegador no sabe
+  // hacerlo, pasa al plan B. Devuelve una promesa que falla solo si la captura
+  // ya funcionó antes y ahora el navegador la rechaza (por ejemplo, si se pide
+  // justo después de salir con Esc): en ese caso basta con volver a hacer clic.
   requestLock() {
-    try {
-      return Promise.resolve(this.canvas.requestPointerLock());
-    } catch (e) {
-      return Promise.reject(e);
+    if (!this.canvas.requestPointerLock || this.lockFailed) {
+      this.#startFallback();
+      return Promise.resolve();
     }
+    return new Promise((resolve, reject) => {
+      const giveUp = (error) => {
+        if (this.active) return resolve();
+        if (this.lockWorked) return reject(error);
+        this.lockFailed = true; // en este navegador no funciona: plan B a partir de ahora
+        this.#startFallback();
+        resolve();
+      };
+      const timer = setTimeout(() => giveUp(new Error('Sin captura del ratón')), LOCK_TIMEOUT_MS);
+      try {
+        Promise.resolve(this.canvas.requestPointerLock()).then(
+          () => {
+            clearTimeout(timer);
+            resolve();
+          },
+          (error) => {
+            clearTimeout(timer);
+            giveUp(error);
+          },
+        );
+      } catch (error) {
+        clearTimeout(timer);
+        giveUp(error);
+      }
+    });
   }
 
+  // Deja de jugar (pausa o catálogo): suelta el ratón o sale del plan B.
   releaseLock() {
     if (document.pointerLockElement) document.exitPointerLock();
+    else this.#stopFallback();
   }
 
   isDown(...codes) {
@@ -121,6 +189,14 @@ export class Input {
       sneak: this.isDown('ShiftLeft', 'ShiftRight'),
       sprint: this.sprintTap || this.isDown('ControlLeft', 'ControlRight'),
       flyToggle,
+    };
+  }
+
+  // Giro con las flechas: (-1, 0, 1) en horizontal y en vertical.
+  arrows() {
+    return {
+      turn: (this.isDown('ArrowLeft') ? 1 : 0) - (this.isDown('ArrowRight') ? 1 : 0),
+      tilt: (this.isDown('ArrowUp') ? 1 : 0) - (this.isDown('ArrowDown') ? 1 : 0),
     };
   }
 

@@ -25,8 +25,19 @@ Abre la dirección que muestra Vite (normalmente http://localhost:5173) en Chrom
 | Clic central | Coger el bloque apuntado para la barra rápida |
 | 1–9 o rueda | Elegir hueco de la barra rápida |
 | E | Catálogo de bloques (clic en un bloque → va al hueco elegido) |
+| Flechas | Mirar alrededor (además del ratón) |
 | Esc | Pausa |
 | F3 | Panel de depuración (fps, posición, chunks) |
+
+## En la tablet
+
+El juego está pensado para una tablet Android con teclado y ratón (Chrome):
+
+- **⛶** en la pantalla de pausa pone el juego a pantalla completa (y en horizontal, si se puede).
+- Si el navegador no deja capturar el ratón, se juega igual: se mira moviendo el ratón (el cursor
+  se oculta) y con las flechas del teclado. Con F3 se ve "sin captura de ratón" cuando pasa.
+- La calidad se ajusta sola según los fps (resolución interna y distancia de visión, de 3 a 7
+  chunks) y se recuerda para la próxima vez. Con F3 se ve la distancia actual.
 
 ## Partida guardada
 
