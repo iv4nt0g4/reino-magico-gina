@@ -108,9 +108,10 @@ function buildCurtainWall(b) {
     b.set(-15, F + 8, k - 32, 'lantern');
     b.set(15, F + 8, k - 32, 'lantern');
   }
-  // Escaleras desde el patio hasta lo alto de la muralla (oeste y este).
-  b.stairs(-14, F, -20, 0, -1, 7, 'white_stone');
-  b.stairs(14, F, -20, 0, -1, 7, 'white_stone');
+  // Escaleras desde el patio hasta lo alto de la muralla (oeste y este); el
+  // último peldaño queda a la altura del camino de ronda.
+  b.stairs(-14, F, -22, 0, -1, 8, 'white_stone');
+  b.stairs(14, F, -22, 0, -1, 8, 'white_stone');
 }
 
 // Torre redonda con franjas, ventanas, tejado cónico y banderín.
@@ -196,7 +197,9 @@ function buildKeep(b) {
 
   // Cuerpo del palacio: paredes rosas, suelo de cuarzo, primera planta de madera.
   b.hollowBox(-11, G, -44, 11, F + 12, -30, 'pastel_pink', { floor: 'quartz', ceiling: 'planks' });
-  b.fillBox(-10, F + 6, -43, 10, F + 6, -31, 'planks');
+  // Primera planta: techo de madera del salón (F + 5) y, encima, el suelo de
+  // arriba (F + 6). Así las alfombras de arriba no se ven desde abajo.
+  b.fillBox(-10, F + 5, -43, 10, F + 6, -31, 'planks');
   for (const [x, z] of [[-11, -44], [11, -44], [-11, -30], [11, -30]]) b.fillBox(x, F, z, x, F + 12, z, 'quartz');
   b.ring(-11, F + 5, -44, 11, -30, 'white_stone');
   b.ring(-11, F + 12, -44, 11, -30, 'white_stone');
@@ -229,19 +232,21 @@ function buildThroneRoom(b) {
   b.set(0, F + 2, -42, 'wool_red');
   b.set(-1, F + 2, -42, 'gold');
   b.set(1, F + 2, -42, 'gold');
-  b.fillBox(0, F + 2, -43, 0, F + 4, -43, 'gold');
-  b.set(0, F + 5, -43, 'star');
+  b.fillBox(0, F + 2, -43, 0, F + 3, -43, 'gold');
+  b.set(0, F + 4, -43, 'star');
   // Columnas de cuarzo.
-  for (const x of [-6, 6]) for (const z of [-33, -37]) b.fillBox(x, F, z, x, F + 5, z, 'quartz');
+  for (const x of [-6, 6]) for (const z of [-33, -37]) b.fillBox(x, F, z, x, F + 4, z, 'quartz');
   // Lámparas colgadas del techo.
-  for (const [x, z] of [[-3, -34], [3, -34], [-3, -39], [3, -39], [0, -32]]) b.set(x, F + 5, z, 'lantern');
+  for (const [x, z] of [[-3, -34], [3, -34], [-3, -39], [3, -39], [0, -32]]) b.set(x, F + 4, z, 'lantern');
   // Estandartes con la G en las paredes laterales.
   b.pattern(-10, F + 4, -39, 'z', SMALL_G_BANNER, BANNER_PALETTE);
   b.pattern(10, F + 4, -39, 'z', mirrored(SMALL_G_BANNER), BANNER_PALETTE);
   // Escalera a la primera planta (pegada a la pared este).
-  b.stairs(9, F, -33, 0, -1, 6, 'white_stone', { width: 2 });
-  // Escalera a la sala de juegos (pegada a la pared oeste).
-  b.stairs(-10, G - 1, -31, 0, -1, 6, 'cobblestone', { width: 2, down: true });
+  // (4 bloques de hueco encima de cada peldaño: al saltar no se choca con el techo)
+  b.stairs(9, F, -33, 0, -1, 6, 'white_stone', { width: 2, clear: 4 });
+  // Escalera a la sala de juegos (pegada a la pared oeste): el primer peldaño
+  // está al nivel del suelo del salón y el último junto al suelo de abajo.
+  b.stairs(-10, G, -31, 0, -1, 7, 'cobblestone', { width: 2, down: true, clear: 4 });
 }
 
 function buildUpperFloor(b) {
@@ -280,7 +285,7 @@ function buildUpperFloor(b) {
 
   // --- Biblioteca ---
   b.fillBox(1, y, -43, 10, y + 3, -43, 'bookshelf');
-  b.fillBox(10, y, -42, 10, y + 3, -39, 'bookshelf');
+  b.fillBox(10, y, -42, 10, y + 3, -40, 'bookshelf'); // deja libre la salida de la escalera
   b.fillBox(1, y, -35, 1, y + 3, -31, 'bookshelf');
   b.fillBox(3, y - 1, -41, 7, y - 1, -34, 'wool_light_blue'); // alfombra
   b.fillBox(4, y, -38, 6, y, -37, 'planks'); // mesa de lectura
@@ -294,6 +299,9 @@ function buildUpperFloor(b) {
 function buildPlayroom(b) {
   const floor = G - 7;
   b.hollowBox(-11, floor, -44, 11, G, -30, 'cobblestone');
+  // Techo de cuarzo, por debajo del suelo del salón del trono (para que no
+  // se vea la alfombra roja desde aquí).
+  b.fillBox(-10, G - 1, -43, 10, G - 1, -31, 'quartz');
   // Suelo arcoíris en franjas.
   const rainbow = ['wool_red', 'wool_orange', 'wool_yellow', 'wool_lime', 'wool_light_blue', 'wool_purple'];
   for (let x = -10; x <= 10; x++) b.fillBox(x, floor, -43, x, floor, -31, rainbow[((x + 10) >> 1) % rainbow.length]);
@@ -301,8 +309,8 @@ function buildPlayroom(b) {
   b.fillBox(4, floor, -36, 7, floor, -33, 'cloud');
   // Piscina de bolas: bloques de lana de colores dentro de un borde de cuarzo.
   const balls = ['wool_pink', 'wool_yellow', 'wool_light_blue', 'wool_lime', 'wool_orange', 'wool_magenta'];
-  b.ring(-9, floor + 1, -43, -3, -37, 'quartz');
-  for (let x = -8; x <= -4; x++) {
+  b.ring(-7, floor + 1, -43, -1, -37, 'quartz');
+  for (let x = -6; x <= -2; x++) {
     for (let z = -42; z <= -38; z++) {
       const k = (((x * 7 + z * 3) % balls.length) + balls.length) % balls.length; // colores mezclados
       b.set(x, floor + 1, z, balls[k]);
@@ -310,6 +318,6 @@ function buildPlayroom(b) {
   }
   // Pared del fondo de arcoíris y luces.
   b.fillBox(-2, floor + 1, -44, 2, floor + 5, -44, 'rainbow');
-  for (const [x, z] of [[-6, -34], [6, -40], [0, -37], [-6, -40], [6, -32]]) b.set(x, G - 1, z, 'lantern');
-  b.set(0, G - 1, -43, 'star');
+  for (const [x, z] of [[-6, -34], [6, -40], [0, -37], [-6, -40], [6, -32]]) b.set(x, G - 2, z, 'lantern');
+  b.set(0, G - 2, -43, 'star');
 }
