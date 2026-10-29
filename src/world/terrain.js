@@ -11,9 +11,9 @@ import { BLOCK } from '../blocks/registry.js';
 
 export const CITY_LEVEL = 42; // altura del suelo de la ciudad
 export const SEA_LEVEL = 34; // por debajo, agua
-const CITY_RADIUS = 90; // radio totalmente llano
+const CITY_RADIUS = 130; // radio totalmente llano (ciudad y zonas especiales)
 const CITY_BLEND = 90; // distancia de transición hasta el terreno natural
-const CITY_NO_TREES = CITY_RADIUS + 40; // sin árboles dentro de este radio
+const CITY_NO_TREES = CITY_RADIUS + 5; // sin árboles dentro de este radio
 const BEACH_LEVEL = SEA_LEVEL + 1; // hasta aquí, arena
 const SNOW_LEVEL = 86; // por encima, nieve
 const TREE_MARGIN = 3; // radio máximo de copa: columnas vecinas a revisar

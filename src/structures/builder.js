@@ -15,6 +15,10 @@ const idOf = (block) => (typeof block === 'string' ? BLOCK[block] : block);
 export class StructureBuilder {
   constructor() {
     this.chunks = new Map(); // "cx,cz" → Map(índice en el chunk → id)
+    // Registro para las pruebas automáticas: puertas (deben tener paso) y
+    // escaleras (deben poder subirse con la física real del jugador).
+    this.doors = []; // { name, x, y, z, inX, inZ, outX, outZ }
+    this.stairways = []; // { name, x, y, z (pie), dx, dz (dirección), rise (altura que se sube) }
   }
 
   // ---------- Bloques sueltos ----------
@@ -102,6 +106,12 @@ export class StructureBuilder {
   }
 
   // ---------- Escaleras y tejados ----------
+
+  // Farola: poste de piedra blanca con un farolillo encima.
+  lampPost(x, y, z) {
+    this.fillBox(x, y, z, x, y + 1, z, 'white_stone');
+    this.set(x, y + 2, z, 'lantern');
+  }
 
   // Escalera de bloques enteros: `steps` peldaños que suben en la dirección
   // (dx, dz), de `width` de ancho hacia el lado (sx, sz). Se despeja `clear`

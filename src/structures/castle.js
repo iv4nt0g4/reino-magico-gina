@@ -83,11 +83,7 @@ function buildMoatAndBridge(b) {
   }
 }
 
-// Farola: poste de piedra blanca con un farolillo encima.
-function lampPost(b, x, z) {
-  b.fillBox(x, F, z, x, F + 1, z, 'white_stone');
-  b.set(x, F + 2, z, 'lantern');
-}
+const lampPost = (b, x, z) => b.lampPost(x, F, z);
 
 function buildCurtainWall(b) {
   // Muralla de 2 bloques de grosor y 8 de alto.
@@ -244,9 +240,11 @@ function buildThroneRoom(b) {
   // Escalera a la primera planta (pegada a la pared este).
   // (4 bloques de hueco encima de cada peldaño: al saltar no se choca con el techo)
   b.stairs(9, F, -33, 0, -1, 6, 'white_stone', { width: 2, clear: 4 });
+  b.stairways.push({ name: 'castillo: a la primera planta', x: 10, y: F, z: -32, dx: 0, dz: -1, rise: 7 });
   // Escalera a la sala de juegos (pegada a la pared oeste): el primer peldaño
   // está al nivel del suelo del salón y el último junto al suelo de abajo.
   b.stairs(-10, G, -31, 0, -1, 7, 'cobblestone', { width: 2, down: true, clear: 4 });
+  b.stairways.push({ name: 'castillo: de la sala de juegos al salón', x: -9, y: G - 6, z: -39, dx: 0, dz: 1, rise: 7 });
 }
 
 function buildUpperFloor(b) {
