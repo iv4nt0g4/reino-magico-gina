@@ -1,0 +1,129 @@
+/* Interfaz por encima del canvas del juego. */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #9fd8ff;
+  font-family: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+  user-select: none;
+}
+
+#game canvas {
+  display: block;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+#crosshair {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  mix-blend-mode: difference;
+  background:
+    linear-gradient(#fff, #fff) center / 2px 100% no-repeat,
+    linear-gradient(#fff, #fff) center / 100% 2px no-repeat;
+}
+
+#debug {
+  position: fixed;
+  left: 8px;
+  top: 8px;
+  margin: 0;
+  padding: 6px 10px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 6px;
+  font: 13px/1.4 ui-monospace, Consolas, monospace;
+  pointer-events: none;
+}
+
+#overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 30%, rgba(255, 214, 240, 0.55), rgba(120, 90, 200, 0.55));
+  backdrop-filter: blur(3px);
+}
+
+.panel {
+  text-align: center;
+  padding: 32px 40px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 12px 40px rgba(90, 40, 140, 0.35);
+}
+
+h1 {
+  margin: 0 0 24px;
+  font-size: clamp(28px, 5vw, 52px);
+  color: #b43c9a;
+  text-shadow: 3px 3px 0 #ffd6f0;
+}
+
+.bar {
+  width: 280px;
+  height: 18px;
+  margin: 0 auto 8px;
+  border-radius: 9px;
+  background: #f1e3ff;
+  overflow: hidden;
+}
+
+#loading-bar {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #ff8ccf, #a98bff);
+  transition: width 0.2s;
+}
+
+#play {
+  font: inherit;
+  font-size: 28px;
+  padding: 12px 40px;
+  border: none;
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(135deg, #ff7cc4, #9d7cff);
+  box-shadow: 0 6px 0 #7a4fc9;
+  cursor: pointer;
+}
+
+#play:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #7a4fc9;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+  color: #5a3a7a;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 26px;
+  margin-right: 3px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #fff;
+  border: 2px solid #d7c4f2;
+  font: inherit;
+  font-size: 14px;
+}
