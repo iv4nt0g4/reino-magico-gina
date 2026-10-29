@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>El Reino Mágico de Gina</title>
+  </head>
+  <body>
+    <div id="game"></div>
+
+    <div id="crosshair" hidden></div>
+    <pre id="debug" hidden></pre>
+
+    <div id="overlay">
+      <div class="panel">
+        <h1 id="title"></h1>
+        <div id="loading">
+          <div class="bar"><div id="loading-bar"></div></div>
+        </div>
+        <button id="play" hidden>▶ Jugar</button>
+        <ul class="controls">
+          <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 🚶</li>
+          <li><kbd>Espacio</kbd> ⤴️</li>
+          <li><kbd>Shift</kbd> 🐢</li>
+          <li><kbd>Ctrl</kbd> / <kbd>W</kbd><kbd>W</kbd> 🏃</li>
+          <li><kbd>Esc</kbd> ⏸️</li>
+        </ul>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
