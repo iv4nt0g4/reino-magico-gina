@@ -15,7 +15,7 @@ const CITY_RADIUS = 130; // radio totalmente llano (ciudad y zonas especiales)
 const CITY_BLEND = 90; // distancia de transición hasta el terreno natural
 const CITY_NO_TREES = CITY_RADIUS + 5; // sin árboles dentro de este radio
 const BEACH_LEVEL = SEA_LEVEL + 1; // hasta aquí, arena
-const SNOW_LEVEL = 86; // por encima, nieve
+export const SNOW_LEVEL = 86; // por encima, nieve
 const TREE_MARGIN = 3; // radio máximo de copa: columnas vecinas a revisar
 
 // Biomas (fuera de playas, agua y montañas nevadas).
@@ -142,8 +142,9 @@ export function createTerrain(seed) {
     set(tx, ty, tz, BLOCK.dirt, false); // bajo el tronco, tierra
   }
 
-  // Rellena un chunk completo con bloques.
-  function generateChunk(cx, cz) {
+  // Rellena un chunk completo con bloques. `isTreeBlocked(x, z)` permite
+  // reservar sitios sin árboles (por ejemplo, donde se construye una aldea).
+  function generateChunk(cx, cz, { isTreeBlocked = null } = {}) {
     const blocks = new Uint8Array(CHUNK_VOLUME);
     for (let lz = 0; lz < CHUNK_SIZE; lz++) {
       for (let lx = 0; lx < CHUNK_SIZE; lx++) {
@@ -191,7 +192,7 @@ export function createTerrain(seed) {
     for (let wz = cz * CHUNK_SIZE - TREE_MARGIN; wz < (cz + 1) * CHUNK_SIZE + TREE_MARGIN; wz++) {
       for (let wx = cx * CHUNK_SIZE - TREE_MARGIN; wx < (cx + 1) * CHUNK_SIZE + TREE_MARGIN; wx++) {
         const h = heightAt(wx, wz);
-        const type = treeAt(wx, wz, h);
+        const type = isTreeBlocked?.(wx, wz) ? null : treeAt(wx, wz, h);
         if (type) placeTree(blocks, cx, cz, wx, h, wz, type);
       }
     }

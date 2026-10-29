@@ -7,6 +7,12 @@
 //   y = altura (la del mundo)
 // Así una misma plantilla sirve para casas que miran al norte, sur, este u oeste,
 // y los carteles se leen bien desde la calle.
+//
+// Las plantillas usan las alturas de la ciudad (suelo en CITY_LEVEL). Fuera de
+// ella (aldeas), `ground` indica la altura real del suelo de la parcela y todo
+// se desplaza en vertical para quedar apoyado en él.
+
+import { CITY_LEVEL } from '../world/terrain.js';
 
 // Ejes de cada orientación (hacia dónde queda la calle).
 const AXES = {
@@ -18,11 +24,12 @@ const AXES = {
 
 export class Frame {
   // (x, z): esquina de la parcela que queda delante a la izquierda vista desde la calle.
-  constructor(builder, x, z, facing) {
+  constructor(builder, x, z, facing, ground = CITY_LEVEL) {
     this.b = builder;
     this.x = x;
     this.z = z;
     this.facing = facing;
+    this.dy = ground - CITY_LEVEL; // desplazamiento vertical respecto a la ciudad
     Object.assign(this, AXES[facing]);
   }
 
@@ -33,12 +40,28 @@ export class Frame {
 
   set(u, y, v, block) {
     const [x, z] = this.world(u, v);
-    this.b.set(x, y, z, block);
+    this.b.set(x, y + this.dy, z, block);
   }
 
   get(u, y, v) {
     const [x, z] = this.world(u, v);
-    return this.b.get(x, y, z);
+    return this.b.get(x, y + this.dy, z);
+  }
+
+  // Formas redondas y árboles centrados en un punto local.
+  cylinder(u, y, v, r, height, block, opts) {
+    const [x, z] = this.world(u, v);
+    this.b.cylinder(x, y + this.dy, z, r, height, block, opts);
+  }
+
+  cone(u, y, v, r, height, block) {
+    const [x, z] = this.world(u, v);
+    this.b.cone(x, y + this.dy, z, r, height, block);
+  }
+
+  tree(u, y, v, type, height) {
+    const [x, z] = this.world(u, v);
+    this.b.tree(x, y + this.dy, z, type, height);
   }
 
   fill(u0, y0, v0, u1, y1, v1, block) {
@@ -97,7 +120,7 @@ export class Frame {
     // La prueba empieza un paso antes del primer peldaño y sube.
     const [x, z] = this.world(u - du, v);
     const [x1, z1] = this.world(u, v);
-    this.b.stairways.push({ name, x, y, z, dx: x1 - x, dz: z1 - z, rise: steps });
+    this.b.stairways.push({ name, x, y: y + this.dy, z, dx: x1 - x, dz: z1 - z, rise: steps });
   }
 
   // Puerta (hueco de 1 × 2) en la fachada en (u, v). Se registra para las pruebas.
@@ -106,7 +129,7 @@ export class Frame {
     const [x, z] = this.world(u, v);
     const [inX, inZ] = this.world(u, v + 1);
     const [outX, outZ] = this.world(u, v - 1);
-    this.b.doors.push({ name, x, y, z, inX, inZ, outX, outZ });
+    this.b.doors.push({ name, x, y: y + this.dy, z, inX, inZ, outX, outZ });
   }
 }
 
