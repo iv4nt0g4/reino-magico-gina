@@ -41,15 +41,26 @@ vuelve a construir el reino desde cero.
 
 Al crear un mundo nuevo se construye una sola vez "El Reino Mágico de Gina" (`src/structures/`):
 un pequeño sistema de construcción (`builder.js`: `fillBox`, `hollowBox`, `cylinder`, `cone`,
-`stairs`, `roof`, `window`, `pattern`...) y una plantilla por edificio (`castle.js`, y las demás
-zonas en las fases 5 y 6). Los chunks resultantes se guardan como chunks modificados, así que a
+`stairs`, `roof`, `window`, `pattern`...; `frame.js` para construir mirando a la calle) y una
+plantilla por edificio o zona: castillo, casas y tiendas (`house.js`), ayuntamiento, Plaza del
+Carrusel, estación, casa de Gina, granja del molino y objetos de ambiente (`props.js`). El plano
+de la ciudad y las zonas reservadas para la fase 6 están en `city.js`.
+
+Cada casa registra su puerta y sus escaleras; una prueba comprueba que todas las puertas tienen
+paso y que todas las escaleras se pueden subir con la física real del juego:
+
+```bash
+npm run verificar
+```
+
+También se ejecuta en GitHub Actions antes de compilar. Los chunks resultantes se guardan como chunks modificados, así que a
 partir de ahí son mundo normal: Gina puede cambiarlos y los mundos ya creados no cambian aunque
 cambie el código.
 
 ## Depuración
 
 `?pos=x,z` en la URL hace aparecer al jugador en otra columna del mundo
-(por ejemplo `?pos=-1880,-120` para ver montañas nevadas o `?pos=-75,-141` para un lago). Con
+(por ejemplo `?pos=-1880,-120` para ver montañas nevadas o `?pos=-144,-127` para un lago). Con
 `npm run dev`, la consola del navegador tiene `window.__juego` (jugador, mundo, agua, cielo, barra
 rápida, sonidos) para depurar; por ejemplo `__juego.sky.time = 0.75` pone la noche.
 
