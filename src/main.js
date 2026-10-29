@@ -11,6 +11,7 @@ import { Sky } from './engine/sky.js';
 import { Player } from './entities/player.js';
 import { WaterSimulation } from './world/water.js';
 import { Storage, SAVE_VERSION } from './world/storage.js';
+import { buildCity, CITY_SPAWN } from './structures/city.js';
 import { Sounds } from './audio/sounds.js';
 import { Hud } from './ui/hud.js';
 import { Hotbar } from './ui/hotbar.js';
@@ -28,15 +29,17 @@ const hud = new Hud();
 const storage = await Storage.open();
 const saved = await storage?.loadMeta().catch(() => null);
 const meta = saved?.version === SAVE_VERSION ? saved : null;
+const newWorld = !meta; // sin partida: se crea el mundo y se construye la ciudad
 if (meta) SETTINGS.seed = meta.seed;
 
-// Punto de aparición: ?pos=x,z en la URL (depuración), la partida guardada o el centro del mundo.
+// Punto de aparición: ?pos=x,z en la URL (depuración), la partida guardada o
+// delante de la puerta del castillo.
 const urlPos = new URLSearchParams(location.search).get('pos');
 const [SPAWN_X, SPAWN_Z] = urlPos
   ? urlPos.split(',').map((v) => Math.floor(Number(v)) || 0)
   : meta
     ? [Math.floor(meta.player.x), Math.floor(meta.player.z)]
-    : [0, 0];
+    : [Math.floor(CITY_SPAWN.x), Math.floor(CITY_SPAWN.z)];
 
 // ---- Motor ----
 const { renderer, scene, camera, viewDistance } = createRenderer(document.getElementById('game'), SETTINGS);
@@ -54,6 +57,16 @@ const interaction = new Interaction({ scene, camera, world, water, player, hotba
 if (meta) {
   hotbar.restore(meta.hotbar, meta.selected);
   sky.time = meta.time;
+}
+
+// Mundo nuevo: construir el reino una sola vez y guardarlo enseguida.
+if (newWorld) {
+  const label = '🏰 Construyendo el reino…';
+  hud.setLoading(0, label);
+  await world.bakeStructures(buildCity(), (done, total) => hud.setLoading(done / total, label));
+  player.spawnAt(CITY_SPAWN.x, CITY_SPAWN.y, CITY_SPAWN.z);
+  await writeSave().catch((error) => console.warn('No se pudo guardar el mundo nuevo:', error));
+  hud.setLoading(0);
 }
 
 // Acceso desde la consola del navegador para depurar (solo en `npm run dev`).
@@ -80,21 +93,29 @@ function play() {
 
 // ---- Guardado ----
 let saving = false;
+let resetting = false; // borrando para empezar un mundo nuevo: ya no se guarda nada
+
+// Escribe los chunks pendientes y el estado del jugador.
+async function writeSave() {
+  if (!storage) return;
+  await world.saveEdits();
+  const p = player.position;
+  await storage.saveMeta({
+    version: SAVE_VERSION,
+    seed: SETTINGS.seed,
+    player: { x: p.x, y: p.y, z: p.z, yaw: player.yaw, pitch: player.pitch, flying: player.flying },
+    hotbar: hotbar.slots,
+    selected: hotbar.selected,
+    time: sky.time,
+    savedAt: Date.now(),
+  });
+}
+
 async function saveGame() {
-  if (!storage || state === 'loading' || saving) return;
+  if (!storage || state === 'loading' || saving || resetting) return;
   saving = true;
   try {
-    await world.saveEdits();
-    const p = player.position;
-    await storage.saveMeta({
-      version: SAVE_VERSION,
-      seed: SETTINGS.seed,
-      player: { x: p.x, y: p.y, z: p.z, yaw: player.yaw, pitch: player.pitch, flying: player.flying },
-      hotbar: hotbar.slots,
-      selected: hotbar.selected,
-      time: sky.time,
-      savedAt: Date.now(),
-    });
+    await writeSave();
     hud.showSaved();
   } catch (error) {
     console.warn('No se pudo guardar la partida:', error);
@@ -131,7 +152,14 @@ hotbar.onSlotClick = (i) => hotbar.select(i);
 // Pedir confirmación antes de cerrar la pestaña (Ctrl+W está muy cerca de
 // Ctrl+correr). En pantalla completa además se bloquean esas teclas.
 window.addEventListener('beforeunload', (e) => {
-  if (state !== 'loading') e.preventDefault();
+  if (state !== 'loading' && !resetting) e.preventDefault();
+});
+
+// Mundo nuevo (desde la pausa, tras confirmar): borrar la partida y recargar.
+hud.enableNewWorld(async () => {
+  resetting = true;
+  await storage?.clear().catch((error) => console.warn('No se pudo borrar la partida:', error));
+  location.reload();
 });
 document.addEventListener('fullscreenchange', () => {
   if (document.fullscreenElement) navigator.keyboard?.lock?.(['KeyW', 'ControlLeft', 'ControlRight']).catch(() => {});
@@ -145,6 +173,9 @@ function spawn() {
     player.yaw = p.yaw;
     player.pitch = p.pitch;
     player.flying = p.flying;
+  } else if (!urlPos) {
+    player.spawnAt(CITY_SPAWN.x, CITY_SPAWN.y, CITY_SPAWN.z);
+    player.yaw = CITY_SPAWN.yaw;
   } else {
     const top = world.topSolidY(SPAWN_X, SPAWN_Z);
     player.spawnAt(SPAWN_X + 0.5, top + 1, SPAWN_Z + 0.5);

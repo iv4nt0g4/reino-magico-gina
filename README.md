@@ -34,8 +34,17 @@ La partida se guarda sola en el navegador (IndexedDB): cada 30 segundos, al paus
 cerrar o cambiar de pestaña. Se guardan los chunks modificados, la posición, la barra rápida y la
 hora del día. El disquete 💾 de la esquina aparece un momento cada vez que se guarda.
 
-Para empezar un mundo nuevo (hasta que haya un menú para ello en la fase 10): en Chrome, F12 →
-Application → IndexedDB → `reino-magico-gina` → *Delete database*, y recargar.
+Para empezar un mundo nuevo: pausa (Esc) → **🌍 Mundo nuevo** → ✔. Se borra la partida y se
+vuelve a construir el reino desde cero.
+
+## La ciudad
+
+Al crear un mundo nuevo se construye una sola vez "El Reino Mágico de Gina" (`src/structures/`):
+un pequeño sistema de construcción (`builder.js`: `fillBox`, `hollowBox`, `cylinder`, `cone`,
+`stairs`, `roof`, `window`, `pattern`...) y una plantilla por edificio (`castle.js`, y las demás
+zonas en las fases 5 y 6). Los chunks resultantes se guardan como chunks modificados, así que a
+partir de ahí son mundo normal: Gina puede cambiarlos y los mundos ya creados no cambian aunque
+cambie el código.
 
 ## Depuración
 

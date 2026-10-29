@@ -161,6 +161,9 @@ const DEFINITIONS = [
   { name: 'flower_white', label: 'Margarita', faces: all('flower_white'), ...PLANT },
   { name: 'torch', label: 'Antorcha', faces: all('torch'), ...PLANT, light: 14, sound: 'wood', category: 'building' },
   { name: 'lantern', label: 'Farolillo', faces: column('lantern', 'lantern_top'), light: 15, sound: 'glass', category: 'building' },
+
+  // --- Fase 4 ---
+  { name: 'bookshelf', label: 'Estantería', faces: column('bookshelf', 'planks'), sound: 'wood', category: 'building' },
 ];
 
 // Lista de texturas, en orden de aparición: el índice es la capa del DataArrayTexture.
