@@ -54,6 +54,13 @@ function insidePolygon(x, y, points) {
   return inside;
 }
 
+// Estrella pequeña (para las esferas).
+const SMALL_STAR_POINTS = Array.from({ length: 10 }, (_, i) => {
+  const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+  const radius = i % 2 === 0 ? 4.2 : 1.8;
+  return [8 + Math.cos(angle) * radius, 8.3 + Math.sin(angle) * radius];
+});
+
 const GRASS = [104, 186, 84];
 const SNOW = [244, 250, 255];
 
@@ -300,6 +307,32 @@ for (const e of ['feliz', 'alegre', 'dormido']) PAINTERS[`brotis_cara_${e}`] = f
 PAINTERS.brotis_piel = (x, y) => skin(x, y, 81);
 PAINTERS.brotis_pie = (x, y) => skin(x, y, 82).map((v) => v * 0.78);
 PAINTERS.brotis_hoja = (x, y) => (Math.abs(x - 7.5) < 1 ? [90, 160, 70] : [150, 226, 96]);
+
+Object.assign(PAINTERS, {
+  // Escamas verdes en filas alternas, con el borde de cada escama más oscuro.
+  dragon_scales: (x, y) => {
+    const row = y >> 2;
+    const lx = (x + (row % 2) * 2) % 4;
+    const ly = y % 4;
+    const edge = ly === 3 || (ly >= 2 && (lx === 0 || lx === 3));
+    const shine = ly === 0 && lx >= 1 && lx <= 2;
+    const base = shine ? [120, 214, 120] : edge ? [40, 120, 64] : [70, 172, 92];
+    return shade(base, (rand(x, y, 90) - 0.5) * 0.1);
+  },
+  // Esfera naranja brillante con una estrella clara en el centro.
+  star_orb: (x, y) => {
+    if (insidePolygon(x + 0.5, y + 0.5, SMALL_STAR_POINTS)) return [255, 248, 214];
+    const d = Math.hypot(x - 7.5, y - 7.5) / 10.6;
+    const glow = mix([255, 214, 110], [236, 120, 30], Math.min(1, d));
+    const highlight = Math.hypot(x - 4, y - 4) < 1.6;
+    return highlight ? [255, 244, 200] : shade(glow, (rand(x, y, 91) - 0.5) * 0.05);
+  },
+  // Pelo dorado que brilla: mechones verticales de amarillo intenso.
+  golden_hair: (x, y) => {
+    const streak = (x + Math.floor(y / 5)) % 4 === 0;
+    return shade(streak ? [255, 246, 170] : [255, 216, 60], (rand(x >> 1, y, 92) - 0.5) * 0.08);
+  },
+});
 
 for (const c of WOOL_COLORS) PAINTERS[`wool_${c.key}`] = wool(c.rgb, 50);
 for (const c of PASTEL_COLORS) PAINTERS[`pastel_${c.key}`] = pastel(c.rgb, 51);

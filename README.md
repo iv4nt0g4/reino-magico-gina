@@ -71,13 +71,14 @@ la juguetería, y en el catálogo (pestaña ✨) para colocarlos donde se quiera
 ## La Aldea de las Siete Estrellas
 
 Al sur de la ciudad, siguiendo el camino de farolillos que sale de la Calle de la Luna, está el
-pueblo más grande del mundo de Gina (`src/structures/town.js`), un homenaje a la serie favorita de
-la familia hecho con elementos genéricos y de dominio público: gran puerta roja, mercado de
-farolillos, plaza con un dragón dorado y siete estrellas, la estatua del héroe de la leyenda del
-Rey Mono sobre su nube dorada, arena del Gran Torneo, el **Dojo del Maestro Iván** (el nombre se
-cambia en `src/config/gina.js`), pagoda de cuatro pisos con mirador, pilares de entrenamiento
-para escalar saltando, casas-cúpula y unas 40 casas y tiendas. Se construye al crear un mundo
-nuevo, junto con la ciudad. Para ir directamente: `?pos=0,215`.
+pueblo más grande del mundo de Gina (`src/structures/town.js`), un homenaje de fan a la serie
+favorita de la familia (sin nombres, logotipos ni símbolos de la serie): gran puerta roja, mercado
+de farolillos, plaza con un **gran dragón verde** enroscado hacia el cielo y **siete esferas de
+estrella** brillantes alrededor, la estatua de un **guerrero con el pelo dorado de punta** (que
+brilla de noche), arena del Gran Torneo, el **Dojo del Maestro Iván** (el nombre se cambia en
+`src/config/gina.js`), pagoda de cuatro pisos con mirador, pilares de entrenamiento para escalar
+saltando, casas-cúpula y unas 40 casas y tiendas. Se construye al crear un mundo nuevo, junto con
+la ciudad. Para ir directamente: `?pos=0,215`.
 
 ## Aldeas y rincones
 

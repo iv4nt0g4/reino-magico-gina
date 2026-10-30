@@ -1,13 +1,13 @@
 // La Aldea de las Siete Estrellas: el pueblo más grande del mundo de Gina,
 // al sur de la ciudad, en su propia explanada (TOWN en world/terrain.js).
 //
-// Es un homenaje a la serie favorita de la familia hecho con elementos
-// genéricos y de dominio público, sin nombres, personajes ni diseños con
-// derechos de autor:
-//  - la estatua del héroe con cola de mono sobre su nube dorada y su bastón
-//    rojo viene de la leyenda clásica del Rey Mono ("Viaje al Oeste");
-//  - un gran torneo de artes marciales, un dragón dorado con siete estrellas,
-//    casas-cúpula, una pagoda, farolillos rojos y puestos de fideos;
+// Es un homenaje de fan a la serie favorita de la familia, sin nombres,
+// logotipos ni símbolos de la serie:
+//  - un gran dragón verde de leyenda oriental enroscado hacia el cielo, con
+//    siete esferas de estrella brillantes alrededor;
+//  - la estatua de un guerrero de artes marciales con el pelo dorado de punta;
+//  - un gran torneo de artes marciales, casas-cúpula, una pagoda, farolillos
+//    rojos y puestos de fideos;
 //  - el Dojo del Maestro Iván (el nombre sale de config/gina.js).
 //
 // Coordenadas: (dx, dz) relativas al centro de la explanada; el camino desde
@@ -74,12 +74,6 @@ function redLantern(b, x, z) {
   b.set(x, F + 3, z, 'wool_red');
 }
 
-// Estrella sobre un pedestal (las siete estrellas de la aldea, y alguna escondida).
-function starPedestal(b, x, y, z, height = 2) {
-  b.fillBox(x, y, z, x, y + height - 1, z, 'quartz');
-  b.set(x, y + height, z, 'star');
-}
-
 function road(b, dx0, dz0, dx1, dz1, material = 'cobblestone') {
   b.fillBox(X(dx0), G, Z(dz0), X(dx1), G, Z(dz1), material);
   b.fillBox(X(dx0), F, Z(dz0), X(dx1), F + 3, Z(dz1), 'air');
@@ -129,98 +123,168 @@ function market(b, rng) {
   barrels(b, X(9), F, Z(-50), rng);
 }
 
-// ---------- Plaza del dragón ----------
+// ---------- Plaza del gran dragón ----------
+
+// Esfera maciza de radio r (bordes redondeados).
+function ball(b, x, y, z, r, block) {
+  for (let dy = -r; dy <= r; dy++) {
+    for (let dz = -r; dz <= r; dz++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (dx * dx + dy * dy + dz * dz <= r * r + 0.6) b.set(x + dx, y + dy, z + dz, block);
+      }
+    }
+  }
+}
 
 function dragonPlaza(b) {
   const cx = X(0), cz = Z(-26);
   b.cylinder(cx, G, cz, 14, 1, 'white_stone');
   b.cylinder(cx, G, cz, 14, 1, 'gold', { hollow: true, inside: null });
-  b.cylinder(cx, G, cz, 6, 1, 'pastel_peach', { hollow: true, inside: null });
-  b.cylinder(cx, F, cz, 14, 8, 'air');
-  // Columna de cuarzo con un dragón dorado enroscado que sube hasta arriba.
-  b.fillBox(cx - 1, F, cz - 1, cx + 1, F + 12, cz + 1, 'quartz');
-  b.fillBox(cx - 1, F + 13, cz - 1, cx + 1, F + 13, cz + 1, 'gold');
-  // El cuerpo es un tubo de 2 × 2 que da casi tres vueltas: se recorre en
-  // pasos pequeños para que no queden huecos.
-  let last = null;
-  for (let i = 0; i <= 260; i++) {
-    const a = i * 0.065;
-    const x = cx + Math.round(Math.cos(a) * 2.5);
-    const z = cz + Math.round(Math.sin(a) * 2.5);
-    const y = F + Math.floor(i / 22);
-    const scale = Math.floor(i / 9) % 3 === 0 ? 'shiny_stone' : 'gold'; // escamas que brillan
-    b.set(x, y, z, scale);
-    b.set(x, y + 1, z, 'gold');
-    if (i % 6 === 0) b.set(x, y + 2, z, 'wool_red'); // cresta
-    last = [x, y, z, a];
+  b.cylinder(cx, G, cz, 9, 1, 'pastel_peach', { hollow: true, inside: null });
+  b.cylinder(cx, F, cz, 14, 40, 'air');
+
+  // El gran dragón verde: un cuerpo largo y grueso que sube en espiral
+  // alrededor del centro de la plaza (como los dragones de las leyendas
+  // orientales), con la barriga amarilla, crestas en el lomo y la cabeza
+  // arriba mirando hacia la puerta de la aldea.
+  const turns = 2.1;
+  const rise = 26;
+  const steps = 520;
+  let top = null;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const a = t * turns * Math.PI * 2 + Math.PI / 2;
+    const r = 7 - t * 3; // la espiral se cierra un poco al subir
+    const x = Math.round(cx + Math.cos(a) * r);
+    const z = Math.round(cz + Math.sin(a) * r);
+    const y = Math.round(F + 2 + t * rise);
+    const thick = t < 0.1 ? 1 : 2; // la cola es más fina
+    ball(b, x, y, z, thick, 'dragon_scales');
+    b.set(x, y - thick, z, 'wool_yellow'); // barriga
+    if (i % 8 === 0) b.set(x, y + thick + 1, z, 'wool_lime'); // cresta del lomo
+    top = [x, y, z];
   }
-  // Cabeza del dragón mirando hacia fuera, con ojos, bigotes y cuernos.
-  const [hx, hy, hz, ha] = last;
-  const ox = Math.round(Math.cos(ha)), oz = Math.round(Math.sin(ha));
-  const sx = -oz, sz = ox; // hacia el lado
-  b.fillBox(Math.min(hx, hx + ox * 2), hy + 1, Math.min(hz, hz + oz * 2), Math.max(hx, hx + ox * 2), hy + 3, Math.max(hz, hz + oz * 2), 'gold');
-  b.set(hx + ox * 3, hy + 1, hz + oz * 3, 'gold'); // hocico
-  b.set(hx + ox * 3, hy + 2, hz + oz * 3, 'gold');
-  b.set(hx + ox * 2 + sx, hy + 3, hz + oz * 2 + sz, 'wool_red'); // ojos
-  b.set(hx + ox * 2 - sx, hy + 3, hz + oz * 2 - sz, 'wool_red');
-  b.set(hx + ox * 3 + sx, hy + 1, hz + oz * 3 + sz, 'wool_white'); // bigotes
-  b.set(hx + ox * 3 - sx, hy + 1, hz + oz * 3 - sz, 'wool_white');
-  b.set(hx + ox * 4 + sx * 2, hy + 1, hz + oz * 4 + sz * 2, 'wool_white');
-  b.set(hx + ox * 4 - sx * 2, hy + 1, hz + oz * 4 - sz * 2, 'wool_white');
-  b.set(hx + sx, hy + 4, hz + sz, 'wool_white'); // cuernos
-  b.set(hx - sx, hy + 4, hz - sz, 'wool_white');
-  // Las siete estrellas alrededor, sobre pedestales.
+  b.set(Math.round(cx + Math.cos(Math.PI / 2) * 7), F + 3, Math.round(cz + Math.sin(Math.PI / 2) * 7), 'wool_lime'); // punta de la cola
+
+  // Cuello: del final de la espiral hacia arriba y hacia el norte.
+  const [tx, ty, tz] = top;
+  const head = [cx, ty + 8, cz - 7]; // centro del cráneo
+  for (let i = 0; i <= 36; i++) {
+    const t = i / 36;
+    const x = Math.round(tx + (head[0] - tx) * t);
+    const y = Math.round(ty + (head[1] - 1 - ty) * t + Math.sin(t * Math.PI) * 2);
+    const z = Math.round(tz + (head[2] + 3 - tz) * t);
+    ball(b, x, y, z, 2, 'dragon_scales');
+    b.set(x, y - 2, z, 'wool_yellow');
+    if (i % 6 === 0) b.set(x, y + 3, z, 'wool_lime');
+  }
+
+  // Cabeza mirando al norte (-z): cráneo, hocico largo, ojos dorados, cuernos,
+  // melena y bigotes largos. Sin dientes ni ojos rojos: es un dragón amable.
+  const [hx, hy, hz] = head;
+  b.fillBox(hx - 3, hy - 2, hz - 2, hx + 3, hy + 2, hz + 2, 'dragon_scales'); // cráneo
+  b.fillBox(hx - 2, hy - 2, hz - 7, hx + 2, hy, hz - 3, 'dragon_scales'); // hocico
+  b.fillBox(hx - 2, hy - 3, hz - 6, hx + 2, hy - 3, hz - 1, 'wool_yellow'); // mandíbula
+  b.fillBox(hx - 1, hy + 1, hz - 7, hx + 1, hy + 1, hz - 3, 'wool_lime'); // lomo del hocico
+  b.set(hx - 1, hy, hz - 8, 'wool_green'); // nariz
+  b.set(hx + 1, hy, hz - 8, 'wool_green');
+  for (const sx of [-1, 1]) {
+    // Ojos dorados grandes con pupila, bajo una ceja.
+    b.set(hx + sx * 3, hy, hz - 2, 'gold');
+    b.set(hx + sx * 3, hy + 1, hz - 2, 'gold');
+    b.set(hx + sx * 2, hy, hz - 3, 'wool_black');
+    b.fillBox(hx + sx * 2, hy + 2, hz - 3, hx + sx * 3, hy + 2, hz - 3, 'wool_green');
+    // Cuernos largos hacia atrás y arriba, con una rama.
+    for (let k = 0; k < 6; k++) b.set(hx + sx * 2, hy + 3 + Math.floor(k * 0.8), hz + 1 + Math.floor(k / 2), 'wool_brown');
+    b.set(hx + sx * 3, hy + 5, hz + 2, 'wool_brown');
+    // Bigotes largos que salen del hocico y cuelgan.
+    for (let k = 0; k < 9; k++) b.set(hx + sx * (3 + Math.floor(k / 2)), hy - 1 - Math.floor(k / 3), hz - 6 + Math.floor(k / 3), 'wool_lime');
+    // Melena a los lados.
+    b.fillBox(hx + sx * 4, hy - 2, hz, hx + sx * 4, hy + 2, hz + 3, 'wool_lime');
+  }
+  b.fillBox(hx - 1, hy + 3, hz - 1, hx + 1, hy + 3, hz + 3, 'wool_lime'); // cresta sobre la cabeza
+
+  // Las siete esferas de estrella alrededor, sobre pedestales de cuarzo.
   for (let k = 0; k < 7; k++) {
     const a = (k / 7) * Math.PI * 2 - Math.PI / 2;
-    starPedestal(b, cx + Math.round(Math.cos(a) * 9), F, cz + Math.round(Math.sin(a) * 9));
+    const ox = cx + Math.round(Math.cos(a) * 12);
+    const oz = cz + Math.round(Math.sin(a) * 12);
+    b.fillBox(ox - 1, F, oz - 1, ox + 1, F + 1, oz + 1, 'quartz');
+    b.set(ox, F + 2, oz, 'gold'); // soporte
+    ball(b, ox, F + 4, oz, 1, 'star_orb'); // esfera de 3 bloques de alto
   }
-  for (const [dx, dz] of [[-12, -6], [12, -6], [-12, 6], [12, 6]]) redLantern(b, cx + dx, cz + dz);
+  for (const [dx, dz] of [[-13, -4], [13, -4], [-13, 4], [13, 4]]) redLantern(b, cx + dx, cz + dz);
 }
 
-// ---------- Estatua del héroe de la leyenda sobre su nube dorada ----------
+// ---------- Estatua del guerrero de pelo dorado ----------
 
 function heroStatue(b) {
   const cx = X(0), cz = Z(-2);
-  // Plazoleta con estanque.
+  // Plazoleta con pedestal.
   b.fillBox(cx - 9, G, cz - 8, cx + 9, G, cz + 8, 'white_stone');
-  b.fillBox(cx - 9, F, cz - 8, cx + 9, F + 16, cz + 8, 'air');
-  b.cylinder(cx, G, cz, 4, 1, 'quartz');
-  b.cylinder(cx, G - 1, cz, 3, 1, 'cobblestone');
-  b.cylinder(cx, G, cz, 3, 1, 'water');
-  b.cylinder(cx, F, cz, 4, 1, 'quartz', { hollow: true, inside: null });
-  // Nube dorada flotando sobre el agua.
-  const cloudY = G + 5;
-  for (let dz = -2; dz <= 2; dz++) {
-    for (let dx = -3; dx <= 3; dx++) {
-      if (dx * dx / 9 + dz * dz / 4 <= 1.1) b.set(cx + dx, cloudY, cz + dz, 'wool_yellow');
-      if (dx * dx / 4 + dz * dz / 2 <= 1) b.set(cx + dx, cloudY + 1, cz + dz, 'wool_yellow');
+  b.fillBox(cx - 9, F, cz - 8, cx + 9, F + 26, cz + 8, 'air');
+  b.fillBox(cx - 4, F, cz - 4, cx + 4, F, cz + 4, 'quartz');
+  b.fillBox(cx - 3, F + 1, cz - 3, cx + 3, F + 1, cz + 3, 'white_stone');
+  b.fillBox(cx - 3, F + 1, cz - 3, cx + 3, F + 1, cz - 3, 'gold'); // frente dorado
+
+  // El guerrero mira al norte (hacia el dragón). Medidas en bloques desde el pedestal.
+  const y = F + 2;
+  const front = cz - 1; // cara delantera del cuerpo
+  // Botas, piernas (pantalón naranja) y cinturón.
+  for (const sx of [-2, 1]) {
+    b.fillBox(cx + sx, y, front, cx + sx + 1, y + 1, cz, 'wool_blue');
+    b.fillBox(cx + sx, y + 2, front, cx + sx + 1, y + 6, cz, 'wool_orange');
+  }
+  b.fillBox(cx - 2, y + 7, front, cx + 2, y + 7, cz, 'wool_blue');
+  // Torso (traje naranja) con la camiseta azul asomando en el cuello.
+  b.fillBox(cx - 2, y + 8, front, cx + 2, y + 11, cz, 'wool_orange');
+  b.fillBox(cx - 1, y + 11, front, cx + 1, y + 11, front, 'wool_blue');
+  b.set(cx, y + 10, front, 'wool_blue');
+  // Brazos: hombros anchos, muñequeras azules y puños en la cintura.
+  for (const sx of [-1, 1]) {
+    const ax = cx + sx * 3;
+    b.fillBox(ax, y + 9, front, ax, y + 11, cz, 'wool_orange');
+    b.fillBox(ax + sx, y + 8, front, ax + sx, y + 9, cz, 'pastel_peach'); // brazo
+    b.set(ax + sx, y + 7, front, 'wool_blue'); // muñequera
+    b.set(ax + sx, y + 7, cz, 'wool_blue');
+    b.set(ax, y + 7, front, 'pastel_peach'); // puño en la cintura
+    b.set(ax, y + 7, cz, 'pastel_peach');
+  }
+  // Cabeza, con ojos verde agua y cejas serias pero simpáticas.
+  const hy = y + 12;
+  b.fillBox(cx - 2, hy, cz - 2, cx + 2, hy + 3, cz, 'pastel_peach');
+  b.set(cx - 1, hy + 2, cz - 2, 'wool_cyan');
+  b.set(cx + 1, hy + 2, cz - 2, 'wool_cyan');
+  b.set(cx - 1, hy + 3, cz - 2, 'golden_hair'); // cejas doradas
+  b.set(cx + 1, hy + 3, cz - 2, 'golden_hair');
+  b.fillBox(cx - 1, hy, cz - 2, cx + 1, hy, cz - 2, 'wool_brown'); // sonrisa de lado a lado
+  // Pelo dorado de punta, que brilla de noche: base sobre la cabeza y
+  // mechones largos hacia arriba y hacia atrás.
+  b.fillBox(cx - 2, hy + 4, cz - 2, cx + 2, hy + 5, cz + 1, 'golden_hair');
+  b.fillBox(cx - 2, hy + 1, cz + 1, cx + 2, hy + 4, cz + 1, 'golden_hair'); // nuca
+  // [x, z, altura, inclinación hacia fuera]: puntas hacia arriba, a los lados y atrás.
+  const spikes = [
+    [0, -1, 7, 0], [-1, -1, 6, 0.3], [1, -1, 6, 0.3], [-2, 0, 5, 0.7], [2, 0, 5, 0.7],
+    [0, 1, 6, 0.2], [-1, 1, 5, 0.5], [1, 1, 5, 0.5], [-2, -2, 3, 1], [2, -2, 3, 1], [0, 2, 4, 0],
+  ];
+  for (const [dx, dz, h, lean] of spikes) {
+    // Cada mechón sube inclinándose hacia fuera (y hacia atrás los de detrás).
+    for (let k = 0; k < h; k++) {
+      const px = cx + dx + Math.round(Math.sign(dx) * lean * k * 0.6);
+      const pz = cz + dz + Math.round((dz > 0 ? 0.5 : 0) * k);
+      b.set(px, hy + 6 + k, pz, 'golden_hair');
     }
   }
-  b.set(cx - 4, cloudY, cz, 'wool_yellow');
-  b.set(cx + 4, cloudY, cz + 1, 'wool_yellow');
-  // El héroe, mirando al norte: piernas, armadura dorada, brazos, cabeza,
-  // diadema de oro, pelo, cola de mono y su bastón rojo con puntas de oro.
-  const y = cloudY + 2;
-  for (const dx of [-1, 1]) b.fillBox(cx + dx, y, cz - 1, cx + dx, y + 1, cz, 'wool_red');
-  b.fillBox(cx - 1, y + 2, cz - 1, cx + 1, y + 4, cz, 'wool_yellow');
-  b.fillBox(cx - 1, y + 2, cz - 1, cx + 1, y + 2, cz, 'wool_red'); // cinturón
-  for (const dx of [-2, 2]) {
-    b.fillBox(cx + dx, y + 3, cz - 1, cx + dx, y + 4, cz, 'wool_yellow');
-    b.set(cx + dx, y + 2, cz - 1, 'pastel_peach'); // manos
+  // Mechones laterales hacia fuera, por encima de las orejas.
+  for (const sx of [-1, 1]) {
+    b.fillBox(cx + sx * 3, hy + 4, cz - 1, cx + sx * 3, hy + 5, cz + 1, 'golden_hair');
+    b.set(cx + sx * 4, hy + 5, cz, 'golden_hair');
   }
-  b.fillBox(cx - 1, y + 5, cz - 2, cx + 1, y + 7, cz, 'pastel_peach'); // cabeza
-  b.set(cx - 1, y + 6, cz - 2, 'wool_black'); // ojos
-  b.set(cx + 1, y + 6, cz - 2, 'wool_black');
-  b.fillBox(cx - 1, y + 7, cz - 2, cx + 1, y + 7, cz - 2, 'gold'); // diadema
-  b.fillBox(cx - 1, y + 8, cz - 2, cx + 1, y + 8, cz, 'wool_brown'); // pelo
-  b.fillBox(cx - 1, y + 7, cz, cx + 1, y + 7, cz, 'wool_brown');
-  b.set(cx, y + 1, cz + 1, 'wool_brown'); // cola
-  b.set(cx, y + 2, cz + 2, 'wool_brown');
-  b.set(cx, y + 3, cz + 2, 'wool_brown');
-  b.set(cx, y + 4, cz + 3, 'wool_brown');
-  b.fillBox(cx + 3, y - 1, cz - 1, cx + 3, y + 9, cz - 1, 'wool_red'); // bastón
-  b.set(cx + 3, y - 1, cz - 1, 'gold');
-  b.set(cx + 3, y + 9, cz - 1, 'gold');
+  b.set(cx - 1, hy + 3, cz - 3, 'golden_hair'); // flequillo de punta sobre la frente
+  b.set(cx + 1, hy + 4, cz - 3, 'golden_hair');
+  // Aura dorada: chispas de luz alrededor del pedestal.
+  for (const [dx, dz] of [[-3, -3], [3, -3], [-3, 3], [3, 3]]) b.set(cx + dx, F + 2, cz + dz, 'star');
+
   for (const [dx, dz] of [[-7, -6], [7, -6], [-7, 6], [7, 6]]) redLantern(b, cx + dx, cz + dz);
   bench(b, cx - 6, F, cz + 2, 'z');
   bench(b, cx + 6, F, cz - 3, 'z');
