@@ -14,6 +14,8 @@ import { BrotisManager } from './entities/brotis.js';
 import { Sparkles } from './entities/sparkles.js';
 import { Hand } from './entities/hand.js';
 import { Fireworks } from './entities/fireworks.js';
+import { AnimalManager } from './entities/animals.js';
+import { Companion } from './entities/companion.js';
 import { WaterSimulation } from './world/water.js';
 import { Storage, SAVE_VERSION } from './world/storage.js';
 import { buildCity, CITY_SPAWN } from './structures/city.js';
@@ -62,6 +64,8 @@ const sparkles = new Sparkles(scene);
 const brotis = new BrotisManager(scene, world, sounds);
 const hand = new Hand();
 const fireworks = new Fireworks(scene, sounds);
+const animals = new AnimalManager(scene, world, sounds);
+const companion = new Companion(scene, sounds);
 interaction.onAction = () => hand.swing();
 
 // Calidad automática (resolución y distancia de visión según los fps).
@@ -93,7 +97,7 @@ if (newWorld) {
 }
 
 // Acceso desde la consola del navegador para depurar (solo en `npm run dev`).
-if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand, fireworks };
+if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand, fireworks, animals, companion };
 
 // Estados: loading → paused ⇄ playing ⇄ catalog
 let state = 'loading';
@@ -292,7 +296,10 @@ function frame(now) {
       if (steps === MAX_STEPS) accumulator = 0;
       playPlayerSounds();
       sky.advance(dt);
-      brotis.update(dt, player.position, materials.uniforms.uDaylight.value, sparkles);
+      const daylight = materials.uniforms.uDaylight.value;
+      brotis.update(dt, player.position, daylight, sparkles);
+      animals.update(dt, player.position, daylight, sparkles);
+      companion.update(dt, world, player, daylight, sparkles);
       sparkles.update(dt);
       fireworks.update(dt, Math.max(0, Math.min(1, -sky.sunElevation / 0.25)), camera.position);
       water.update(dt);

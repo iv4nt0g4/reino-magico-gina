@@ -5,7 +5,8 @@
 
 import * as THREE from 'three';
 import { paintTexture, TEXTURE_SIZE } from '../blocks/textures.js';
-import { BLOCK, IS_SOLID, IS_LIQUID } from '../blocks/registry.js';
+import { BLOCK, IS_SOLID } from '../blocks/registry.js';
+import { Creature, MAX_STEP } from './creature.js';
 
 const MAX_ALIVE = 8; // como mucho, alrededor de Gina
 const SPAWN_MIN = 14; // distancia de aparición (bloques)
@@ -13,10 +14,6 @@ const SPAWN_MAX = 40;
 const DESPAWN = 70; // más lejos, desaparece
 const SPAWN_EVERY = 2.5; // segundos entre intentos
 const WALK_SPEED = 1.1;
-const GRAVITY = 25;
-const MAX_FALL = 20;
-const MAX_STEP = 1 / 30; // los fotogramas largos se dividen en pasos de este tamaño
-const HOP_SPEED = 7; // para subir un escalón
 const NOTICE = 9; // a esta distancia mira a Gina y se acerca
 const FRIEND = 2.6; // a esta distancia se queda cerca de ella
 const JOY = 3.5; // a esta distancia salta de alegría
@@ -76,25 +73,15 @@ function createModel(m) {
   return { root, head, headMats, feet, sprout };
 }
 
-class Brotis {
+class Brotis extends Creature {
   constructor(materials, x, y, z) {
+    super(x, y, z, { radius: 0.35, height: 1.8 });
     this.materials = materials;
     this.model = createModel(materials);
-    this.position = new THREE.Vector3(x, y, z);
-    this.vy = 0;
-    this.heading = Math.random() * Math.PI * 2; // hacia dónde mira (0 = -z)
-    this.goal = null; // ángulo hacia el que camina, o null si está quieto
     this.timer = Math.random() * 3;
     this.joyCooldown = 0;
     this.joyTime = 0; // dura la cara de alegría
     this.blinkTime = 2 + Math.random() * 3;
-    this.walkPhase = 0;
-    this.onGround = false;
-  }
-
-  // ¿Bloque sólido en esta celda? (lo no cargado cuenta como sólido: no se va allí)
-  static solid(world, x, y, z) {
-    return world.isSolid(Math.floor(x), Math.floor(y), Math.floor(z));
   }
 
   update(dt, world, gina, fx) {
@@ -127,56 +114,11 @@ class Brotis {
       if (this.goal !== null) speed = WALK_SPEED * 0.7;
     }
 
-    // Girar poco a poco hacia la meta.
-    if (this.goal !== null) {
-      let diff = this.goal - this.heading;
-      diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-      this.heading += diff * Math.min(1, dt * 5);
-    }
-
-    // --- Moverse ---
-    if (speed > 0) {
-      const dx = -Math.sin(this.heading) * speed * dt;
-      const dz = -Math.cos(this.heading) * speed * dt;
-      const ahead = { x: p.x + Math.sign(dx) * 0.35 + dx, z: p.z + Math.sign(dz) * 0.35 + dz };
-      const feet = p.y + 0.05;
-      const blocked = Brotis.solid(world, ahead.x, feet, ahead.z);
-      const tooHigh = Brotis.solid(world, ahead.x, feet + 1, ahead.z) || Brotis.solid(world, ahead.x, feet + 2, ahead.z);
-      const below = world.getBlock(Math.floor(ahead.x), Math.floor(feet - 1), Math.floor(ahead.z));
-      const cliff = !Brotis.solid(world, ahead.x, feet - 1, ahead.z) && !Brotis.solid(world, ahead.x, feet - 2, ahead.z);
-      const water = below >= 0 && IS_LIQUID[below];
-      if (blocked && !tooHigh && this.onGround) {
-        this.vy = HOP_SPEED; // escalón de un bloque: saltito
-      } else if (blocked || cliff || water) {
-        this.goal = this.heading + Math.PI * (0.5 + Math.random()); // dar la vuelta
-        this.timer = 1.5;
-      }
-      if (!Brotis.solid(world, p.x + dx, feet, p.z) && !Brotis.solid(world, p.x + dx, feet + 1, p.z)) p.x += dx;
-      if (!Brotis.solid(world, p.x, feet, p.z + dz) && !Brotis.solid(world, p.x, feet + 1, p.z + dz)) p.z += dz;
-      this.walkPhase += dt * 10;
-    }
-
-    // --- Gravedad ---
-    this.vy = Math.max(-MAX_FALL, this.vy - GRAVITY * dt);
-    const ny = p.y + this.vy * dt;
-    if (this.vy <= 0) {
-      // Recorrer todas las celdas por las que pasa al caer (aunque sea un paso largo).
-      let landed = false;
-      for (let cell = Math.floor(p.y - 0.001); cell >= Math.floor(ny); cell--) {
-        if (Brotis.solid(world, p.x, cell, p.z)) {
-          p.y = cell + 1;
-          landed = true;
-          break;
-        }
-      }
-      if (landed) this.vy = 0;
-      else p.y = ny;
-      this.onGround = landed;
-    } else if (Brotis.solid(world, p.x, ny + 1.8, p.z)) {
-      this.vy = 0; // se da con la cabeza
-    } else {
-      p.y = ny;
-      this.onGround = false;
+    this.turn(dt);
+    this.move(dt, world, speed);
+    if (this.blocked) {
+      this.goal = this.heading + Math.PI * (0.5 + Math.random()); // dar la vuelta
+      this.timer = 1.5;
     }
 
     this.#animate(dt, speed);
