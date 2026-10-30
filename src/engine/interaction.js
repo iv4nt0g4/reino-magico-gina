@@ -13,6 +13,7 @@ export class Interaction {
     this.nextBreak = 0;
     this.nextPlace = 0;
     this.direction = new THREE.Vector3();
+    this.onAction = null; // aviso al romper o colocar (para mover la mano)
 
     // Contorno: aristas de un cubo un poco más grande que el bloque.
     const edges = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.004, 1.004, 1.004));
@@ -61,6 +62,7 @@ export class Interaction {
     if (!t) return false;
     if (!this.world.setBlock(t.x, t.y, t.z, 0)) return false;
     this.sounds.play(BLOCKS[t.id].sound, 'break');
+    this.onAction?.();
     // Flores y antorchas encima se caen con el bloque.
     const above = this.world.getBlock(t.x, t.y + 1, t.z);
     if (above > 0 && BLOCKS[above].needsSupport) this.world.setBlock(t.x, t.y + 1, t.z, 0);
@@ -87,6 +89,7 @@ export class Interaction {
     }
     if (!this.world.setBlock(x, y, z, id)) return false;
     this.sounds.play(BLOCKS[id].sound, 'place');
+    this.onAction?.();
     this.water.notify(x, y, z);
     this.#updateTarget();
     return true;
