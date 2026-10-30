@@ -16,6 +16,19 @@
     <div id="block-name"></div>
     <div id="hotbar"></div>
 
+    <div id="touch" hidden>
+      <div id="joy-base" hidden><div id="joy-knob"></div></div>
+      <button class="t-btn" id="t-pause" data-touch="pause" title="Pausa">⏸️</button>
+      <button class="t-btn" id="t-inventory" data-touch="inventory" title="Inventario">🎒</button>
+      <div id="t-pad">
+        <button class="t-btn" id="t-fly" data-touch="fly" title="Volar">🕊️</button>
+        <button class="t-btn" id="t-place" data-touch="place" title="Colocar">🧱</button>
+        <button class="t-btn" id="t-break" data-touch="break" title="Romper">⛏️</button>
+        <button class="t-btn" id="t-sneak" data-touch="sneak" title="Agacharse / bajar">⬇️</button>
+        <button class="t-btn" id="t-jump" data-touch="jump" title="Saltar / subir">⤴️</button>
+      </div>
+    </div>
+
     <div id="toast"></div>
     <div id="confetti" hidden></div>
     <div id="sparkle-flash" hidden></div>
@@ -68,6 +81,7 @@
         <div id="options">
           <div id="themes" title="Colores"></div>
           <button id="music-toggle" title="Música">🎵</button>
+          <button id="settings-open" title="Ajustes">⚙️</button>
         </div>
         <div id="modes">
           <button id="mode-creative" class="mode" title="Creativo: todos los bloques, volar">🎨 Creativo</button>
@@ -81,7 +95,7 @@
             <button id="new-world-no" title="No">✖</button>
           </div>
         </div>
-        <ul class="controls">
+        <ul class="controls" id="controls-keys">
           <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 🚶</li>
           <li><kbd>Espacio</kbd> ⤴️</li>
           <li><kbd>Shift</kbd> 🐢</li>
@@ -95,6 +109,27 @@
           <li><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> 👀</li>
           <li><kbd>Esc</kbd> ⏸️</li>
         </ul>
+      </div>
+      <div id="settings" class="panel" hidden>
+        <h2>⚙️</h2>
+        <div class="setting" title="Distancia de visión (auto: se ajusta sola según lo rápido que vaya)">
+          <span class="s-icon">🔭</span><span class="s-name">Distancia</span>
+          <div class="choice" id="set-distance">
+            <button data-v="auto">Auto</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button><button data-v="6">6</button><button data-v="7">7</button>
+          </div>
+        </div>
+        <label class="setting"><span class="s-icon">🖱️</span><span class="s-name">Ratón</span><input type="range" id="set-sensitivity" min="0.3" max="3" step="0.1" /><output></output></label>
+        <label class="setting"><span class="s-icon">👀</span><span class="s-name">Visión</span><input type="range" id="set-fov" min="60" max="100" step="5" /><output></output></label>
+        <label class="setting"><span class="s-icon">🔊</span><span class="s-name">Volumen</span><input type="range" id="set-volume" min="0" max="1" step="0.05" /><output></output></label>
+        <label class="setting"><span class="s-icon">🎵</span><span class="s-name">Música</span><input type="range" id="set-music" min="0" max="1" step="0.05" /><output></output></label>
+        <div class="setting" title="Botones en la pantalla para jugar sin teclado ni ratón">
+          <span class="s-icon">👆</span><span class="s-name">Táctil</span>
+          <div class="choice" id="set-touch"><button data-v="auto">Auto</button><button data-v="on">Sí</button><button data-v="off">No</button></div>
+        </div>
+        <div class="settings-buttons">
+          <button id="settings-reset" title="Como al principio">↺</button>
+          <button id="settings-done" title="Listo">✔</button>
+        </div>
       </div>
     </div>
 

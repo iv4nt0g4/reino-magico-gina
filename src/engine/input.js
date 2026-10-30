@@ -26,6 +26,8 @@ export class Input {
     this.sprintTap = false; // doble pulsación de W detectada
     this.flyTap = false; // doble pulsación de Espacio detectada
     this.lastTap = {}; // código de tecla → instante de la última pulsación
+    // Controles táctiles (ui/touch.js): joystick y botones que se suman al teclado.
+    this.virtual = { forward: 0, strafe: 0, jump: false, sneak: false, sprint: false };
 
     // Avisos para el juego
     this.onToggleDebug = null;
@@ -45,6 +47,8 @@ export class Input {
     });
     document.addEventListener('mousedown', (e) => {
       if (!this.active) return;
+      // Tocar la barra rápida o los botones táctiles no rompe ni coloca bloques.
+      if (e.target.closest?.('#hotbar, #touch')) return;
       e.preventDefault();
       this.buttons.add(e.button);
       this.onMouseDown?.(e.button);
@@ -182,12 +186,14 @@ export class Input {
     if (!forward) this.sprintTap = false;
     const flyToggle = this.flyTap;
     this.flyTap = false;
+    const v = this.virtual;
+    const clamp = (x) => Math.max(-1, Math.min(1, x));
     return {
-      forward: (forward ? 1 : 0) - (this.isDown('KeyS') ? 1 : 0),
-      strafe: (this.isDown('KeyD') ? 1 : 0) - (this.isDown('KeyA') ? 1 : 0),
-      jump: this.isDown('Space'),
-      sneak: this.isDown('ShiftLeft', 'ShiftRight'),
-      sprint: this.sprintTap || this.isDown('ControlLeft', 'ControlRight'),
+      forward: clamp((forward ? 1 : 0) - (this.isDown('KeyS') ? 1 : 0) + v.forward),
+      strafe: clamp((this.isDown('KeyD') ? 1 : 0) - (this.isDown('KeyA') ? 1 : 0) + v.strafe),
+      jump: this.isDown('Space') || v.jump,
+      sneak: this.isDown('ShiftLeft', 'ShiftRight') || v.sneak,
+      sprint: this.sprintTap || this.isDown('ControlLeft', 'ControlRight') || v.sprint,
       flyToggle,
     };
   }

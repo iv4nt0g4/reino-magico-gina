@@ -831,3 +831,259 @@ body.mouse-hidden * {
   background: var(--c-soft);
   cursor: pointer;
 }
+
+/* ---------- Ajustes ---------- */
+#settings {
+  min-width: min(520px, calc(100vw - 32px));
+}
+
+#settings h2 {
+  margin: 0 0 12px;
+  font-size: 34px;
+}
+
+.setting {
+  display: grid;
+  grid-template-columns: 34px 92px 1fr 56px;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+  color: var(--c-text);
+  font-size: 18px;
+  text-align: left;
+}
+
+.s-icon {
+  font-size: 24px;
+}
+
+.setting .choice {
+  grid-column: 3 / 5;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.choice button,
+.settings-buttons button {
+  font: inherit;
+  min-width: 44px;
+  height: 38px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 12px;
+  color: var(--c-text);
+  background: var(--c-soft);
+  cursor: pointer;
+}
+
+.choice button.active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  box-shadow: 0 3px 0 var(--c-deep);
+}
+
+.setting input[type='range'] {
+  width: 100%;
+  accent-color: var(--c1);
+  height: 28px;
+}
+
+.setting output {
+  text-align: right;
+  font-size: 16px;
+}
+
+.settings-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.settings-buttons button {
+  width: 64px;
+  height: 46px;
+  font-size: 22px;
+}
+
+#settings-done {
+  color: #fff;
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  box-shadow: 0 3px 0 var(--c-deep);
+}
+
+#settings-open {
+  width: 46px;
+  height: 46px;
+  font-size: 22px;
+  border: none;
+  border-radius: 50%;
+  background: var(--c-soft);
+  cursor: pointer;
+}
+
+/* ---------- Controles táctiles ---------- */
+#touch {
+  position: fixed;
+  inset: 0;
+  z-index: 1; /* por debajo de la barra rápida, que se puede tocar */
+  touch-action: none;
+}
+
+#joy-base {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  border: 3px solid rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
+#joy-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--c1);
+  border: 3px solid #fff;
+  opacity: 0.85;
+  transform: translate(-50%, -50%);
+}
+
+.t-btn {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  font-size: 28px;
+  border: 3px solid rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  background: rgba(40, 20, 70, 0.35);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.t-btn.down {
+  background: var(--c-sel);
+  transform: scale(0.92);
+}
+
+#t-pause {
+  right: 14px;
+  top: 12px;
+  width: 52px;
+  height: 52px;
+  font-size: 22px;
+}
+
+#t-inventory {
+  right: 76px;
+  top: 12px;
+  width: 52px;
+  height: 52px;
+  font-size: 22px;
+}
+
+#t-pad {
+  position: absolute;
+  right: 16px;
+  bottom: 86px;
+  width: 210px;
+  height: 210px;
+}
+
+#t-jump {
+  right: 0;
+  bottom: 0;
+  width: 80px;
+  height: 80px;
+  font-size: 34px;
+}
+
+#t-sneak {
+  right: 92px;
+  bottom: 0;
+}
+
+#t-break {
+  right: 0;
+  bottom: 96px;
+  width: 72px;
+  height: 72px;
+}
+
+#t-place {
+  right: 84px;
+  bottom: 84px;
+  width: 72px;
+  height: 72px;
+}
+
+#t-fly {
+  right: 150px;
+  bottom: 150px;
+  width: 54px;
+  height: 54px;
+  font-size: 24px;
+}
+
+/* Con controles táctiles la barra rápida es un poco más grande y las teclas no se explican. */
+body.touch .slot {
+  width: 58px;
+  height: 58px;
+}
+
+body.touch #controls-keys {
+  display: none;
+}
+
+/* Pantallas bajas (móvil en horizontal): el menú se encoge y, si aun así no
+   cabe, se puede desplazar. */
+.panel {
+  max-height: calc(100vh - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+}
+
+@media (max-height: 520px) {
+  .panel {
+    padding: 14px 22px;
+  }
+  #crown {
+    font-size: 28px;
+  }
+  h1 {
+    font-size: 30px;
+  }
+  #subtitle {
+    margin-bottom: 10px;
+    font-size: 17px;
+  }
+  #play {
+    font-size: 22px;
+    padding: 8px 30px;
+  }
+  #options,
+  #modes {
+    margin-top: 8px;
+  }
+  #new-world {
+    margin-top: 10px;
+  }
+  .controls {
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  .setting {
+    margin: 6px 0;
+  }
+  #settings h2 {
+    margin-bottom: 4px;
+    font-size: 26px;
+  }
+}

@@ -24,6 +24,8 @@ import { Birthday } from './entities/birthday.js';
 import { Music } from './audio/music.js';
 import { Messages } from './ui/messages.js';
 import { applyTheme, savedTheme, themePicker } from './ui/theme.js';
+import { SettingsMenu, loadPreferences } from './ui/settingsMenu.js';
+import { TouchControls } from './ui/touch.js';
 import { isBirthday } from './config/gina.js';
 import { WaterSimulation } from './world/water.js';
 import { Storage, SAVE_VERSION } from './world/storage.js';
@@ -101,6 +103,27 @@ const quality = new QualityManager(renderer, (distance) => {
 });
 quality.apply();
 
+// Controles táctiles (móvil o tablet sin ratón).
+const touch = new TouchControls(input, {
+  pause: () => input.releaseLock(),
+  inventory: () => input.onOpenCatalog?.(),
+  canFly: () => mode === 'creative',
+});
+
+// Ajustes de la pausa (⚙️): se aplican al momento y se recuerdan en el dispositivo.
+const BASE_SENSITIVITY = SETTINGS.mouseSensitivity;
+function applyPreferences(p) {
+  SETTINGS.mouseSensitivity = BASE_SENSITIVITY * p.sensitivity;
+  SETTINGS.fov = p.fov;
+  sounds.setVolume(p.volume);
+  music.setVolume(p.music);
+  quality.setFixedDistance(p.distance === 'auto' ? null : p.distance);
+  touch.setMode(p.touch);
+}
+const preferences = loadPreferences();
+const settingsMenu = new SettingsMenu(preferences, applyPreferences);
+applyPreferences(preferences);
+
 const ARROW_TURN_SPEED = 2.2; // radianes por segundo al girar con las flechas
 const ARROW_TILT_SPEED = 1.6;
 
@@ -124,7 +147,7 @@ if (newWorld) {
 
 // Acceso desde la consola del navegador para depurar (solo en `npm run dev`).
 if (import.meta.env.DEV) {
-  window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand, fireworks, animals, companion, materials, drops, backpack, inventoryScreen, setMode, respawn, signs, pet, party, music, messages };
+  window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand, fireworks, animals, companion, materials, drops, backpack, inventoryScreen, setMode, respawn, signs, pet, party, music, messages, touch, preferences };
 }
 
 // Estados: loading → paused ⇄ playing ⇄ catalog (catálogo o inventario)
@@ -138,6 +161,8 @@ function setState(next) {
   const previous = state;
   state = next;
   hud.setState(next);
+  touch.setPlaying(next === 'playing');
+  if (next === 'paused') settingsMenu.close();
   if (next !== 'playing') {
     interaction.hideOutline();
     quality.reset();
@@ -254,6 +279,7 @@ function setMode(next, announce = false) {
   }
   hotbar.setInventory(adventure ? backpack : hotbar.creative);
   hud.setMode(mode);
+  touch.refresh();
   if (announce) {
     hud.toast(adventure ? '🎒 ¡Aventura!' : '🎨 ¡Creativo!');
     sounds.magic(0.8);
