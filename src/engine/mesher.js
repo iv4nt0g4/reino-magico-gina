@@ -107,15 +107,54 @@ export function meshChunk(region, sky, blockLight) {
   const solid = new MeshBuilder();
   const water = new MeshBuilder();
 
-  meshCubes(region, sky, blockLight, solid);
-  meshSpecial(region, sky, blockLight, solid, water);
+  const range = visibleRange(region);
+  if (range) {
+    meshCubes(region, sky, blockLight, solid, range);
+    meshSpecial(region, sky, blockLight, solid, water, range);
+  }
 
   return { solid: solid.result(), water: water.result() };
 }
 
+// Franja de alturas donde puede haber algo que dibujar: por debajo de la
+// primera celda no opaca (del chunk o de su borde) todo es roca maciza, y por
+// encima del bloque más alto del chunk solo hay aire. Mallar solo esa franja
+// ahorra la mayor parte del trabajo. Devuelve [yMin, yMax] o null si está vacío.
+function visibleRange(region) {
+  let yMax = -1;
+  for (let y = CHUNK_HEIGHT - 1; y >= 0 && yMax < 0; y--) {
+    const row = regionIndex(OFFSET, y, OFFSET);
+    for (let z = 0; z < CHUNK_SIZE && yMax < 0; z++) {
+      for (let x = 0; x < CHUNK_SIZE; x++) {
+        if (region[row + z * STRIDE_Z + x] !== 0) {
+          yMax = y;
+          break;
+        }
+      }
+    }
+  }
+  if (yMax < 0) return null;
+  let yMin = -1;
+  for (let y = 0; y <= yMax && yMin < 0; y++) {
+    // El chunk y una celda de borde alrededor (sus caras laterales miran ahí).
+    const row = regionIndex(OFFSET - 1, y, OFFSET - 1);
+    for (let z = 0; z < CHUNK_SIZE + 2 && yMin < 0; z++) {
+      for (let x = 0; x < CHUNK_SIZE + 2; x++) {
+        if (!IS_OPAQUE[region[row + z * STRIDE_Z + x]]) {
+          yMin = y;
+          break;
+        }
+      }
+    }
+  }
+  if (yMin < 0) return null;
+  // Un bloque por debajo: su cara de arriba puede verse desde la celda abierta.
+  return [Math.max(0, yMin - 1), yMax];
+}
+
 // ---------- Cubos (greedy meshing con AO y luz suave) ----------
 
-function meshCubes(region, sky, blockLight, out) {
+function meshCubes(region, sky, blockLight, out, [yMin, yMax]) {
   const maxCells = CHUNK_HEIGHT * CHUNK_SIZE;
   // Máscara del corte actual: textura + 1 (0 = sin cara), AO de las 4 esquinas
   // (2 bits cada una) y luz de cielo y de bloque de las 4 esquinas (6 bits cada una).
@@ -123,7 +162,6 @@ function meshCubes(region, sky, blockLight, out) {
   const maskAo = new Uint8Array(maxCells);
   const maskSky = new Uint32Array(maxCells);
   const maskBlock = new Uint32Array(maxCells);
-  const pos = [0, 0, 0];
   const corner = [0, 0, 0];
   const ao = [0, 0, 0, 0];
   // ¿Dos caras de la máscara se pueden fusionar? (misma textura, AO y luz)
@@ -135,23 +173,27 @@ function meshCubes(region, sky, blockLight, out) {
     const sign = face & 1 ? -1 : 1;
     const ua = U_AXIS[axis];
     const va = V_AXIS[axis];
+    // El eje y (sea el del corte o el de las filas) se limita a la franja visible.
     const uSize = SIZE[ua];
-    const vSize = SIZE[va];
+    const vStart = va === 1 ? yMin : 0;
+    const vSize = va === 1 ? yMax - yMin + 1 : SIZE[va];
+    const sliceStart = axis === 1 ? yMin : 0;
+    const sliceEnd = axis === 1 ? yMax + 1 : SIZE[axis];
+    const base = regionIndex(OFFSET, 0, OFFSET);
+    const axisStride = AXIS_STRIDE[axis];
     const flip = sign * CROSS_SIGN[axis] < 0;
     const shade = FACE_SHADE[face];
     const front = sign * AXIS_STRIDE[axis];
     const uStride = AXIS_STRIDE[ua];
     const vStride = AXIS_STRIDE[va];
 
-    for (let slice = 0; slice < SIZE[axis]; slice++) {
+    for (let slice = sliceStart; slice < sliceEnd; slice++) {
       // 1) Máscara de caras visibles de este corte, con su AO y luz.
       let n = 0;
       for (let v = 0; v < vSize; v++) {
+        const rowStart = base + slice * axisStride + (v + vStart) * vStride;
         for (let u = 0; u < uSize; u++, n++) {
-          pos[axis] = slice;
-          pos[ua] = u;
-          pos[va] = v;
-          const i = regionIndex(pos[0] + OFFSET, pos[1], pos[2] + OFFSET);
+          const i = rowStart + u * uStride;
           const block = region[i];
           mask[n] = 0;
           if (block === 0 || SHAPE[block] !== SHAPE_CUBE) continue;
@@ -214,7 +256,7 @@ function meshCubes(region, sky, blockLight, out) {
           for (let k = 0; k < 4; k++) ao[k] = (maskAo[n] >> (k * 2)) & 3;
           for (let k = 0; k < 4; k++) {
             const qu = u + (CORNERS[k][0] > 0 ? w : 0);
-            const qv = v + (CORNERS[k][1] > 0 ? h : 0);
+            const qv = v + vStart + (CORNERS[k][1] > 0 ? h : 0);
             corner[axis] = plane;
             corner[ua] = qu;
             corner[va] = qv;
@@ -242,8 +284,8 @@ function meshCubes(region, sky, blockLight, out) {
 
 // ---------- Plantas (en X) y agua ----------
 
-function meshSpecial(region, sky, blockLight, solid, water) {
-  for (let y = 0; y < CHUNK_HEIGHT; y++) {
+function meshSpecial(region, sky, blockLight, solid, water, [yMin, yMax]) {
+  for (let y = yMin; y <= yMax; y++) {
     for (let z = 0; z < CHUNK_SIZE; z++) {
       for (let x = 0; x < CHUNK_SIZE; x++) {
         const i = regionIndex(x + OFFSET, y, z + OFFSET);

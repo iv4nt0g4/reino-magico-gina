@@ -298,6 +298,8 @@ export class Sky {
     this.domeUniforms.uTop.value.copy(top);
     this.domeUniforms.uHorizon.value.copy(horizon);
     u.uFogColor.value.set(horizon.r, horizon.g, horizon.b);
+    // Niebla solo hacia el borde de lo que se dibuja (para que no se vea dónde
+    // acaba el mundo); cerca, el aire está limpio. El shader la suaviza aún más.
     u.uFogNear.value = underwater ? 1 : this.viewDistance * 0.6;
     u.uFogFar.value = underwater ? 22 : this.viewDistance;
 
