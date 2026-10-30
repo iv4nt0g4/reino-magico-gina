@@ -4,6 +4,8 @@
 //
 // La luz llega por vértice (luz de cielo y luz de bloque, ya convertidas a
 // brillo). La hora del día solo cambia un uniform: no hay que recalcular mallas.
+// Además hay una "linterna mágica": si Gina lleva en la mano un bloque que
+// brilla, ilumina a su alrededor (se calcula por píxel, sin tocar las mallas).
 
 import * as THREE from 'three';
 import { TEXTURE_NAMES } from './registry.js';
@@ -20,6 +22,7 @@ const vertexShader = /* glsl */ `
   out float vShade;
   out vec2 vLight;
   out float vFogDepth;
+  out vec3 vWorldPos;
 
   void main() {
     vUv = uv;
@@ -29,6 +32,7 @@ const vertexShader = /* glsl */ `
     vLayer = aInfo.x;
     vShade = aInfo.y;
     vLight = aLight;
+    vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     vFogDepth = length(mvPosition.xyz);
     gl_Position = projectionMatrix * mvPosition;
@@ -44,12 +48,16 @@ const fragmentShader = /* glsl */ `
   uniform vec3 uFogColor;
   uniform float uFogNear;
   uniform float uFogFar;
+  uniform float uMinLight;  // penumbra mínima (cuevas)
+  uniform float uHeldLevel; // nivel de luz (0–15) del bloque que Gina lleva en la mano
+  uniform vec3 uHeldPos;    // dónde está esa luz (los ojos de Gina)
 
   in vec2 vUv;
   flat in float vLayer;
   in float vShade;
   in vec2 vLight;
   in float vFogDepth;
+  in vec3 vWorldPos;
 
   out vec4 fragColor;
 
@@ -62,7 +70,12 @@ const fragmentShader = /* glsl */ `
   #endif
     vec3 skyLight = uSkyLightColor * vLight.x * uDaylight;
     vec3 blockLight = BLOCK_LIGHT_COLOR * vLight.y;
-    vec3 light = max(max(skyLight, blockLight), vec3(0.03));
+    // Linterna mágica: misma curva de brillo que la luz de bloque del mallado,
+    // pero llega un poco más lejos (pierde 3/4 de nivel por bloque).
+    float heldLevel = uHeldLevel - distance(vWorldPos, uHeldPos) * 0.75;
+    float held = heldLevel > 0.0 ? pow(0.86, 15.0 - heldLevel) : 0.0;
+    blockLight = max(blockLight, BLOCK_LIGHT_COLOR * held);
+    vec3 light = max(max(skyLight, blockLight), vec3(uMinLight * 0.9, uMinLight * 0.95, uMinLight * 1.1));
     vec3 rgb = color.rgb * vShade * light;
     float fog = smoothstep(uFogNear, uFogFar, vFogDepth);
   #ifdef WATER
@@ -73,7 +86,7 @@ const fragmentShader = /* glsl */ `
   }
 `;
 
-export function createBlockMaterials() {
+export function createBlockMaterials(settings) {
   const texture = new THREE.DataArrayTexture(
     generateTexturePixels(),
     TEXTURE_SIZE,
@@ -96,6 +109,9 @@ export function createBlockMaterials() {
     uFogColor: { value: new THREE.Vector3() },
     uFogNear: { value: 0 },
     uFogFar: { value: 1 },
+    uMinLight: { value: settings.caveLight },
+    uHeldLevel: { value: 0 },
+    uHeldPos: { value: new THREE.Vector3() },
   };
 
   const solid = new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader, fragmentShader, uniforms });
