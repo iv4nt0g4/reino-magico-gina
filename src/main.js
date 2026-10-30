@@ -12,6 +12,7 @@ import { Sky } from './engine/sky.js';
 import { Player } from './entities/player.js';
 import { BrotisManager } from './entities/brotis.js';
 import { Sparkles } from './entities/sparkles.js';
+import { Hand } from './entities/hand.js';
 import { WaterSimulation } from './world/water.js';
 import { Storage, SAVE_VERSION } from './world/storage.js';
 import { buildCity, CITY_SPAWN } from './structures/city.js';
@@ -58,6 +59,8 @@ const catalog = new Catalog(hotbar);
 const interaction = new Interaction({ scene, camera, world, water, player, hotbar, sounds, settings: SETTINGS });
 const sparkles = new Sparkles(scene);
 const brotis = new BrotisManager(scene, world, sounds);
+const hand = new Hand();
+interaction.onAction = () => hand.swing();
 
 // Calidad automática (resolución y distancia de visión según los fps).
 const quality = new QualityManager(renderer, (distance) => {
@@ -88,7 +91,7 @@ if (newWorld) {
 }
 
 // Acceso desde la consola del navegador para depurar (solo en `npm run dev`).
-if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis };
+if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand };
 
 // Estados: loading → paused ⇄ playing ⇄ catalog
 let state = 'loading';
@@ -153,7 +156,10 @@ window.addEventListener('pagehide', saveGame);
 input.onToggleDebug = () => hud.toggleDebug();
 input.onHotbarSelect = (i) => hotbar.select(i);
 input.onHotbarScroll = (d) => hotbar.scroll(d);
-input.onMouseDown = (button) => interaction.mouseDown(button);
+input.onMouseDown = (button) => {
+  if (button === 0) hand.swing(); // como en el original, la mano golpea aunque no haya bloque
+  interaction.mouseDown(button);
+};
 input.onOpenCatalog = () => {
   setState('catalog');
   input.releaseLock();
@@ -309,6 +315,11 @@ function frame(now) {
   sky.update(player.headInWater);
   hud.setUnderwater(player.headInWater);
   renderer.render(scene, camera);
+  if (state !== 'loading') {
+    const v = player.velocity;
+    hand.update(dt, hotbar.selectedBlock(), Math.hypot(v.x, v.z), player.onGround, materials.uniforms.uDaylight.value);
+    hand.render(renderer);
+  }
 
   // Panel de depuración (F3)
   fpsFrames++;
