@@ -5,7 +5,7 @@ export const SETTINGS = {
   seed: 20260729,
   renderDistance: 7, // en chunks (objetivo 6–8)
   unloadMargin: 2, // chunks extra antes de descargar
-  maxChunkJobs: 6, // trabajos simultáneos en los workers
+  maxChunkJobs: 12, // trabajos simultáneos (lecturas del guardado y workers)
   workerCount: Math.max(2, Math.min(4, (navigator.hardwareConcurrency || 4) - 1)),
 
   // Cámara

@@ -78,6 +78,7 @@ const fragmentShader = /* glsl */ `
     vec3 light = max(max(skyLight, blockLight), vec3(uMinLight * 0.9, uMinLight * 0.95, uMinLight * 1.1));
     vec3 rgb = color.rgb * vShade * light;
     float fog = smoothstep(uFogNear, uFogFar, vFogDepth);
+    fog *= fog; // poca niebla hasta cerca del borde, y del todo justo al final
   #ifdef WATER
     fragColor = vec4(mix(rgb, uFogColor, fog), color.a);
   #else

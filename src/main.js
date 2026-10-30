@@ -147,7 +147,7 @@ if (newWorld) {
 
 // Acceso desde la consola del navegador para depurar (solo en `npm run dev`).
 if (import.meta.env.DEV) {
-  window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand, fireworks, animals, companion, materials, drops, backpack, inventoryScreen, setMode, respawn, signs, pet, party, music, messages, touch, preferences };
+  window.__juego = { renderer, scene, camera, player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand, fireworks, animals, companion, materials, drops, backpack, inventoryScreen, setMode, respawn, signs, pet, party, music, messages, touch, preferences };
 }
 
 // Estados: loading → paused ⇄ playing ⇄ catalog (catálogo o inventario)
