@@ -80,6 +80,7 @@ export class Interaction {
     this.onBreak = null; // (x, y, z, id): bloque roto (para soltar lo que se recoge)
     this.creatures = null; // () => lista de seres a los que se puede acariciar
     this.onPet = null; // (ser)
+    this.onPlace = null; // (x, y, z, id): bloque colocado
     this.breaking = null; // { x, y, z, progress, nextHit } mientras se rompe poco a poco
 
     // Contorno: aristas de un cubo un poco más grande que el bloque.
@@ -212,6 +213,7 @@ export class Interaction {
     }
     if (!this.world.setBlock(x, y, z, id)) return false;
     this.hotbar.useSelected();
+    this.onPlace?.(x, y, z, id);
     this.sounds.play(BLOCKS[id].sound, 'place');
     this.onAction?.();
     this.water.notify(x, y, z);

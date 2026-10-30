@@ -22,8 +22,29 @@ export class Hud {
       adventure: document.getElementById('mode-adventure'),
     };
 
-    this.title.textContent = GINA.tituloJuego;
+    // Título con las letras dando saltitos, una detrás de otra.
+    this.title.replaceChildren(
+      ...[...GINA.tituloJuego].map((ch, i) => {
+        const span = document.createElement('span');
+        span.textContent = ch;
+        span.style.animationDelay = `${i * 0.07}s`;
+        return span;
+      }),
+    );
     document.title = GINA.tituloJuego;
+    document.getElementById('subtitle').textContent = `✨ ¡Hola, ${GINA.nombre}! ✨`;
+    // Estrellitas que suben por detrás del menú.
+    const stars = document.getElementById('title-stars');
+    for (let i = 0; i < 24; i++) {
+      const star = document.createElement('span');
+      star.textContent = ['✦', '★', '✧', '♥'][i % 4];
+      star.style.left = `${(i * 37) % 100}%`;
+      star.style.animationDelay = `${-(i * 0.9) % 9}s`;
+      star.style.animationDuration = `${7 + (i % 5)}s`;
+      star.style.fontSize = `${14 + (i * 7) % 18}px`;
+      stars.appendChild(star);
+    }
+    this.confettiEl = document.getElementById('confetti');
   }
 
   // Barra de carga, con un texto opcional (por ejemplo, mientras se construye el reino).
@@ -63,6 +84,7 @@ export class Hud {
   // Muestra la interfaz según el estado: 'playing', 'paused' o 'catalog'.
   setState(state) {
     this.overlay.hidden = state !== 'paused';
+    document.body.classList.toggle('paused', state === 'paused' || state === 'loading');
     this.crosshair.hidden = state !== 'playing';
     if (state === 'playing') this.playButton.textContent = '▶ Seguir'; // tras la primera partida
   }
@@ -87,6 +109,39 @@ export class Hud {
     this.toastEl.classList.add('visible');
     clearTimeout(this.toastTimer);
     this.toastTimer = setTimeout(() => this.toastEl.classList.remove('visible'), 2200);
+  }
+
+  // Lluvia de confeti por toda la pantalla (cumpleaños).
+  confetti() {
+    const colors = ['#ff7cc4', '#ffd84d', '#7cd4ff', '#9dff9a', '#b59bff', '#ff9a6c'];
+    this.confettiEl.replaceChildren(
+      ...Array.from({ length: 80 }, (_, i) => {
+        const piece = document.createElement('i');
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = `${Math.random() * 1.5}s`;
+        piece.style.animationDuration = `${2.5 + Math.random() * 2}s`;
+        return piece;
+      }),
+    );
+    this.confettiEl.hidden = false;
+    clearTimeout(this.confettiTimer);
+    this.confettiTimer = setTimeout(() => (this.confettiEl.hidden = true), 5000);
+  }
+
+  // Botón de la música en la pausa.
+  onMusicToggle(enabled, callback) {
+    const button = document.getElementById('music-toggle');
+    const show = (on) => {
+      button.textContent = on ? '🎵' : '🔇';
+      button.classList.toggle('off', !on);
+    };
+    show(enabled);
+    button.addEventListener('click', () => {
+      enabled = !enabled;
+      show(enabled);
+      callback(enabled);
+    });
   }
 
   // Destello de estrellitas al reaparecer.
