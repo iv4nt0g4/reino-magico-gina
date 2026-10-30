@@ -123,6 +123,27 @@ export class Sounds {
     for (const v of voices[kind] ?? []) this.#voice(v, volume);
   }
 
+  // "Plin" al recoger un bloque del suelo (un poco distinto cada vez).
+  pickup(volume = 1) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const f = 900 + Math.random() * 300;
+    this.#voice({ wave: 'triangle', from: f, to: f * 1.5, dur: 0.09, gain: 0.08 }, volume);
+  }
+
+  // Campanitas al fabricar algo: tres notas que suben.
+  craft(volume = 1) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    [660, 830, 990].forEach((f, i) => this.#voice({ wave: 'sine', from: f, to: f, dur: 0.22, gain: 0.1, delay: i * 0.08 }, volume));
+  }
+
+  // Magia al reaparecer o cambiar de modo: un arpegio brillante.
+  magic(volume = 1) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    [523, 659, 784, 1047, 1319].forEach((f, i) =>
+      this.#voice({ wave: 'triangle', from: f, to: f * 1.01, dur: 0.35, tremolo: 12, gain: 0.07, delay: i * 0.07 }, volume),
+    );
+  }
+
   // Silbidito de un cohete que sube (muy suave).
   whistle(volume = 1) {
     if (!this.ctx || this.ctx.state !== 'running' || volume <= 0.02) return;

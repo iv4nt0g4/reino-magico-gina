@@ -104,6 +104,31 @@ de un saltito, no se tiran por precipicios y se mueven en pasos pequeños para n
 aunque el juego vaya lento. Los modelos se montan con cajas y texturas pixel art dibujadas en canvas
 (`src/entities/models.js`).
 
+## Aventura suave (fase 8)
+
+En la pausa se elige el modo: **🎨 Creativo** (todos los bloques, volar, romper al instante) o
+**🎒 Aventura** (recoger materiales y fabricar). Se guarda con la partida y se puede cambiar cuando
+se quiera; cada modo tiene su propia barra rápida.
+
+En la Aventura suave:
+- **Romper** manteniendo el clic: el bloque se va agrietando (más rápido que en el original) y sale
+  un bloque pequeñito que gira; al pasar cerca vuela hacia Gina y se guarda con un "plin". La hierba
+  da tierra; las flores y las antorchas se rompen al instante.
+- **Colocar** gasta bloques. Se empieza con 8 antorchas de regalo.
+- **Inventario (E)**: barra rápida, mochila de 27 huecos, cuadrícula de crafteo de 3 × 3 y el
+  **libro de recetas** con dibujos (`src/blocks/recipes.js`, 52 recetas en tres pestañas: básicos,
+  colores y magia). Las recetas que se pueden hacer salen primero; al pulsar una, los ingredientes se
+  colocan solos y basta con pulsar el resultado (con Mayúsculas, todos los que se pueda). Los colores
+  se hacen con flores, como pinturas: lana blanca + flor roja = lana roja, roja + amarilla = naranja…
+- **Caricias**: clic derecho sobre un animalito, Capi o un Brotis = corazones y su sonido. En aventura,
+  las ovejas regalan lana de su color (cada 30 s).
+- **Sin peligro**: no hay hambre ni vida. Solo una caída muy grande (más de 12 bloques, salvo al agua
+  o sobre una nube) hace que reaparezca en la puerta del castillo con una lluvia de estrellitas, sin
+  perder nada.
+
+Ajustes en `src/config/settings.js` (`safeFallHeight`, `woolEverySeconds`) y dureza de cada bloque en
+`src/blocks/registry.js` (`hardness`, `drop`).
+
 ## Cuevas y linterna mágica
 
 Bajo tierra nunca está negro del todo: queda una penumbra suave para que Gina vea por dónde va

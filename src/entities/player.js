@@ -27,7 +27,8 @@ export class Player {
     this.inWater = false; // el cuerpo está en el agua
     this.headInWater = false; // la cámara está bajo el agua
     this.hitWall = false; // en el último paso chocó de lado con algo
-    this.canFly = true; // modo creativo (la "Aventura suave" llega en la fase 8)
+    this.canFly = true; // en creativo se vuela; en la Aventura suave no
+    this.fallStart = null; // altura desde la que empezó a caer (null = esta caída no cuenta)
     this.eyeOffset = EYE_HEIGHT;
     this.stepDistance = 0; // recorrido desde el último paso
     this.events = []; // { type: 'step' | 'land', block, speed? } para los sonidos
@@ -38,6 +39,7 @@ export class Player {
     this.previous = { x, y, z };
     this.velocity = { x: 0, y: 0, z: 0 };
     this.flying = false;
+    this.fallStart = null; // al aparecer (o reaparecer) la primera caída no cuenta
   }
 
   // Girar un ángulo dado (en radianes), por ejemplo con las flechas.
@@ -135,6 +137,7 @@ export class Player {
         if (BLOCKS[below]?.bounce && !this.sneaking && fallSpeed > S.minBounceSpeed) {
           this.velocity.y = fallSpeed * S.bounceFactor;
           this.onGround = false;
+          this.fallStart = this.position.y; // la nube amortigua: la caída empieza de nuevo
         }
       }
     }
@@ -156,6 +159,17 @@ export class Player {
     this.inWater = liquidAt(p.y + 0.1) || liquidAt(p.y + 0.9);
     this.headInWater = liquidAt(p.y + this.eyeOffset);
     if (this.inWater && !wasInWater && fallSpeed > 3) this.events.push({ type: 'splash', speed: fallSpeed });
+
+    // Caídas grandes: se mide desde el punto más alto. Caer al agua (o volando) no cuenta.
+    if (this.onGround || this.inWater || this.flying) {
+      if (this.onGround && !wasOnGround && !this.inWater && this.fallStart !== null) {
+        const height = this.fallStart - p.y;
+        if (height > S.safeFallHeight) this.events.push({ type: 'bigFall', height });
+      }
+      this.fallStart = p.y;
+    } else if (this.fallStart !== null) {
+      this.fallStart = Math.max(this.fallStart, p.y);
+    }
 
     // Pasos: un sonido cada cierta distancia caminada por el suelo.
     if (this.onGround && !this.inWater) {

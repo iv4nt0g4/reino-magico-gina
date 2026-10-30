@@ -16,6 +16,32 @@
     <div id="block-name"></div>
     <div id="hotbar"></div>
 
+    <div id="toast"></div>
+    <div id="sparkle-flash" hidden></div>
+
+    <div id="inventory" hidden>
+      <div class="inventory-panel">
+        <div class="inventory-main">
+          <div class="inventory-header">
+            <span class="inventory-title">🎒</span>
+            <button id="inventory-close" title="Cerrar">✖</button>
+          </div>
+          <div class="crafting">
+            <div id="craft-grid"></div>
+            <div class="craft-arrow">➜</div>
+            <div id="craft-result" class="slot" title="Fabricar"></div>
+          </div>
+          <div id="backpack" class="slot-grid"></div>
+          <div id="inventory-hotbar" class="slot-grid"></div>
+        </div>
+        <div class="recipe-book">
+          <div class="book-header"><span class="book-title">📖</span><div id="book-tabs"></div></div>
+          <div id="book-list"></div>
+        </div>
+      </div>
+      <div id="cursor-stack" class="slot" hidden></div>
+    </div>
+
     <div id="catalog" hidden>
       <div class="catalog-panel">
         <div class="catalog-header">
@@ -35,6 +61,10 @@
         <div id="loading-label"></div>
         <button id="play" hidden>▶ Jugar</button>
         <button id="fullscreen" title="Pantalla completa">⛶</button>
+        <div id="modes">
+          <button id="mode-creative" class="mode" title="Creativo: todos los bloques, volar">🎨 Creativo</button>
+          <button id="mode-adventure" class="mode" title="Aventura: recoger, craftear y construir">🎒 Aventura</button>
+        </div>
         <div id="new-world" hidden>
           <button id="new-world-ask" title="Mundo nuevo">🌍 Mundo nuevo</button>
           <div id="new-world-confirm" hidden>
@@ -51,7 +81,7 @@
           <li><kbd>Espacio</kbd><kbd>Espacio</kbd> 🕊️</li>
           <li>🌊 <kbd>Espacio</kbd> ⬆️</li>
           <li>🖱️ izquierdo ⛏️</li>
-          <li>🖱️ derecho 🧱</li>
+          <li>🖱️ derecho 🧱 🐑❤️</li>
           <li><kbd>1</kbd>…<kbd>9</kbd> / rueda 🎒</li>
           <li><kbd>E</kbd> 📦</li>
           <li><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> 👀</li>

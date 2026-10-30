@@ -51,6 +51,10 @@ export const SETTINGS = {
   volume: 0.6,
   stepDistance: 1.7, // bloques recorridos entre dos pasos
 
+  // Aventura suave
+  safeFallHeight: 12, // bloques que se pueden caer sin que pase nada (más: reaparece con estrellitas)
+  woolEverySeconds: 30, // cada cuánto una oveja da lana al acariciarla
+
   // Día y noche
   dayLengthSeconds: 20 * 60, // un día completo
   startTime: 0.04, // hora al crear un mundo (0 = amanecer, 0,25 = mediodía, 0,5 = atardecer)

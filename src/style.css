@@ -174,6 +174,16 @@ kbd {
   box-shadow: 0 0 12px rgba(255, 180, 230, 0.9);
 }
 
+.slot b {
+  position: absolute;
+  right: 4px;
+  bottom: 1px;
+  font-size: 15px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #3a2060, -1px -1px 0 #3a2060, 1px -1px 0 #3a2060, -1px 1px 0 #3a2060;
+  pointer-events: none;
+}
+
 #block-name {
   position: fixed;
   left: 50%;
@@ -269,6 +279,325 @@ kbd {
   width: 42px;
   height: 42px;
   image-rendering: pixelated;
+}
+
+/* ---------- Inventario y crafteo (Aventura suave) ---------- */
+#inventory {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(60, 30, 100, 0.35);
+}
+
+body.inventory-open #hotbar,
+body.inventory-open #block-name {
+  display: none;
+}
+
+.inventory-panel {
+  --s: clamp(36px, 6.4vh, 54px); /* tamaño de cada hueco */
+  display: flex;
+  gap: 14px;
+  max-width: calc(100vw - 24px);
+  padding: 12px 14px 14px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 40px rgba(90, 40, 140, 0.35);
+}
+
+.inventory-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inventory-header,
+.book-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inventory-title,
+.book-title {
+  font-size: 30px;
+}
+
+#inventory-close {
+  font-size: 20px;
+  width: 52px;
+  height: 42px;
+  border: none;
+  border-radius: 12px;
+  color: #8a5fd6;
+  background: #f1e3ff;
+  cursor: pointer;
+}
+
+#inventory .slot,
+#cursor-stack {
+  width: var(--s);
+  height: var(--s);
+  border: 3px solid #e2d2f7;
+  background: #f7f0ff;
+}
+
+#inventory .slot:hover {
+  border-color: #ff9ad5;
+  background: #fff;
+}
+
+#inventory .slot img,
+#cursor-stack img {
+  width: calc(var(--s) * 0.72);
+  height: calc(var(--s) * 0.72);
+}
+
+#inventory .slot.selected {
+  border-color: #ff9ad5;
+  box-shadow: none;
+}
+
+.crafting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 8px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #fff0f8, #f1eaff);
+}
+
+#craft-grid,
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, var(--s));
+  gap: 4px;
+}
+
+.slot-grid {
+  grid-template-columns: repeat(9, var(--s));
+}
+
+#inventory-hotbar {
+  padding-top: 8px;
+  border-top: 3px dashed #e2d2f7;
+}
+
+.craft-arrow {
+  font-size: 34px;
+  color: #b59bff;
+}
+
+#craft-result {
+  width: calc(var(--s) * 1.35);
+  height: calc(var(--s) * 1.35);
+  border-radius: 16px;
+}
+
+#craft-result.ready {
+  border-color: #ffc94d;
+  background: #fff8dc;
+  box-shadow: 0 0 14px rgba(255, 200, 80, 0.9);
+}
+
+#craft-result.made {
+  animation: made 0.35s ease-out;
+}
+
+@keyframes made {
+  50% {
+    transform: scale(1.18);
+  }
+}
+
+#cursor-stack {
+  position: fixed;
+  z-index: 5;
+  transform: translate(-50%, -50%);
+  border-color: transparent;
+  background: transparent;
+  pointer-events: none;
+}
+
+.recipe-book {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(330px, 34vw);
+}
+
+#book-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+#book-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: calc(var(--s) * 8.4);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.recipe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 3px solid transparent;
+  border-radius: 14px;
+  background: #f4f0f7;
+  font: inherit;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.recipe.can {
+  opacity: 1;
+  background: #f7f0ff;
+}
+
+.recipe.can:hover {
+  border-color: #ff9ad5;
+  background: #fff;
+}
+
+.recipe.nope {
+  animation: nope 0.35s;
+}
+
+@keyframes nope {
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+.recipe .mini {
+  display: grid;
+  grid-template-columns: repeat(3, 22px);
+  gap: 2px;
+}
+
+.recipe .mini img,
+.recipe .mini i {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: rgba(150, 120, 200, 0.12);
+  image-rendering: pixelated;
+}
+
+.recipe .mini img.missing {
+  filter: grayscale(1);
+  opacity: 0.45;
+  outline: 2px dashed #e7849a;
+}
+
+.recipe .arrow {
+  color: #b59bff;
+  font-size: 20px;
+}
+
+.recipe .out {
+  position: relative;
+}
+
+.recipe .out img {
+  width: 40px;
+  height: 40px;
+  image-rendering: pixelated;
+}
+
+.recipe .out b {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  font-size: 15px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #3a2060, -1px -1px 0 #3a2060, 1px -1px 0 #3a2060, -1px 1px 0 #3a2060;
+}
+
+/* ---------- Modos, mensajes y estrellitas ---------- */
+#modes {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.mode {
+  font: inherit;
+  font-size: 18px;
+  padding: 8px 18px;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  color: #6a4a9a;
+  background: #f1e3ff;
+  cursor: pointer;
+}
+
+.mode.active {
+  color: #fff;
+  background: linear-gradient(135deg, #ff9ad5, #b59bff);
+  border-color: #fff;
+  box-shadow: 0 3px 0 #8a5fd6;
+}
+
+#toast {
+  position: fixed;
+  left: 50%;
+  top: 22%;
+  transform: translate(-50%, -50%) scale(0.8);
+  padding: 8px 22px;
+  border-radius: 999px;
+  font-size: 30px;
+  color: #fff;
+  background: linear-gradient(135deg, rgba(255, 124, 196, 0.85), rgba(157, 124, 255, 0.85));
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+}
+
+#toast.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+#sparkle-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 30%, #fff 0 3px, transparent 4px),
+    radial-gradient(circle at 70% 20%, #fff6a8 0 4px, transparent 5px),
+    radial-gradient(circle at 40% 70%, #ffd6f0 0 3px, transparent 4px),
+    radial-gradient(circle at 85% 65%, #fff 0 3px, transparent 4px),
+    radial-gradient(circle at 55% 45%, #fff6a8 0 5px, transparent 6px),
+    radial-gradient(circle at 10% 80%, #ffd6f0 0 4px, transparent 5px),
+    radial-gradient(circle at 50% 50%, rgba(255, 240, 250, 0.95), rgba(220, 190, 255, 0.85));
+  opacity: 0;
+}
+
+#sparkle-flash.go {
+  animation: sparkle-flash 1.5s ease-out;
+}
+
+@keyframes sparkle-flash {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 /* ---------- Bajo el agua y guardado ---------- */
