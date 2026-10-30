@@ -4,16 +4,16 @@
 // Plano (norte = z negativa; el castillo está al norte del punto de aparición):
 //
 //                      ═══════ Barrio del Norte ═══════
-//            [Palacio de Hielo*]      CASTILLO       [Bahía del Pirata*]
+//            [Palacio de Hielo]       CASTILLO        [Bahía del Pirata]
 //   [Barrio Alto O]  [Barrio del Castillo O]  [Barrio del Castillo E]  [Barrio Alto E]
 //                 [Parque + unicornio]   ·   [Mercado]
-//   ════════════════════════ Avenida del Castillo ════════════════════════
-//   [Bosque Encantado*]  [Barrio O] ║ tiendas ║ Calle  ║ tiendas ║ [Barrio E]  [Feria*]
-//                                   ║        Principal          ║
-//   [Jardín de las Hadas*]  [Casa de Gina]  (Plaza del Carrusel)  [Estación] [Molino]
+//   [Bosque] ══════════════════ Avenida del Castillo ════════════════════ [Feria]
+//   [Encantado]  [Barrio O] ║ tiendas ║ Calle  ║ tiendas ║ [Barrio E]
+//                           ║        Principal          ║
+//   [Jardín de las Hadas]  [Casa de Gina]  (Plaza del Carrusel)  [Estación] [Molino]
 //                      ═══════ Calle de la Luna ═══════
-//
-// * Zonas de la fase 6: se dejan libres (naturaleza) para construirlas después.
+//                                   ║
+//                      (Aldea de las Siete Estrellas, al sur)
 
 import { CITY_LEVEL } from '../world/terrain.js';
 import { StructureBuilder } from './builder.js';
@@ -27,6 +27,11 @@ import { ginaHouse } from './ginaHouse.js';
 import { windmill, fields, farmyard } from './farm.js';
 import { well, marketStall, bench, cart, barrels, plantedTree, unicornStatue } from './props.js';
 import { buildTown, townRoad } from './town.js';
+import { buildFair } from './fair.js';
+import { buildForest } from './forest.js';
+import { buildIcePalace } from './icePalace.js';
+import { buildPirateBay } from './pirateBay.js';
+import { buildFairyGarden } from './fairyGarden.js';
 
 const G = CITY_LEVEL;
 const F = G + 1;
@@ -34,15 +39,6 @@ const CITY_SEED = 7_2019; // la ciudad es siempre la misma
 
 // Donde aparece Gina en un mundo nuevo: delante de la puerta del castillo.
 export const CITY_SPAWN = CASTLE_SPAWN;
-
-// Zonas reservadas para la fase 6 (rectángulos x0, z0, x1, z1).
-export const RESERVED_ZONES = {
-  feria: [46, -8, 85, 38],
-  bosqueEncantado: [-85, -8, -46, 44],
-  palacioDeHielo: [-85, -85, -46, -52],
-  bahiaDelPirata: [46, -85, 85, -52],
-  jardinDeLasHadas: [-85, 46, -46, 85],
-};
 
 export function buildCity() {
   const b = new StructureBuilder();
@@ -55,6 +51,12 @@ export function buildCity() {
   neighborhoods(b, rng);
   castleFront(b, rng);
   specialPlaces(b, rng);
+  // Zonas de la fase 6, alrededor de la ciudad.
+  buildFair(b, rng);
+  buildForest(b, rng);
+  buildIcePalace(b);
+  buildPirateBay(b);
+  buildFairyGarden(b, rng);
   // La Aldea de las Siete Estrellas, al sur, con su camino desde la Calle de la Luna.
   buildTown(b);
   townRoad(b);

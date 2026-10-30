@@ -107,6 +107,14 @@ export class StructureBuilder {
 
   // ---------- Escaleras y tejados ----------
 
+  // Deja llana una zona rectangular: suelo de `top` a la altura y (con tierra
+  // debajo) y aire encima hasta `clear` bloques, quitando árboles y plantas.
+  flatten(x0, z0, x1, z1, y, { top = 'grass', depth = 4, clear = 16 } = {}) {
+    this.fillBox(x0, y - depth, z0, x1, y - 1, z1, 'dirt');
+    this.fillBox(x0, y, z0, x1, y, z1, top);
+    this.fillBox(x0, y + 1, z0, x1, Math.min(CHUNK_HEIGHT - 1, y + clear), z1, 'air');
+  }
+
   // Farola: poste de piedra blanca con un farolillo encima.
   lampPost(x, y, z) {
     this.fillBox(x, y, z, x, y + 1, z, 'white_stone');

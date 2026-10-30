@@ -13,6 +13,7 @@ import { Player } from './entities/player.js';
 import { BrotisManager } from './entities/brotis.js';
 import { Sparkles } from './entities/sparkles.js';
 import { Hand } from './entities/hand.js';
+import { Fireworks } from './entities/fireworks.js';
 import { WaterSimulation } from './world/water.js';
 import { Storage, SAVE_VERSION } from './world/storage.js';
 import { buildCity, CITY_SPAWN } from './structures/city.js';
@@ -60,6 +61,7 @@ const interaction = new Interaction({ scene, camera, world, water, player, hotba
 const sparkles = new Sparkles(scene);
 const brotis = new BrotisManager(scene, world, sounds);
 const hand = new Hand();
+const fireworks = new Fireworks(scene, sounds);
 interaction.onAction = () => hand.swing();
 
 // Calidad automática (resolución y distancia de visión según los fps).
@@ -91,7 +93,7 @@ if (newWorld) {
 }
 
 // Acceso desde la consola del navegador para depurar (solo en `npm run dev`).
-if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand };
+if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand, fireworks };
 
 // Estados: loading → paused ⇄ playing ⇄ catalog
 let state = 'loading';
@@ -292,6 +294,7 @@ function frame(now) {
       sky.advance(dt);
       brotis.update(dt, player.position, materials.uniforms.uDaylight.value, sparkles);
       sparkles.update(dt);
+      fireworks.update(dt, Math.max(0, Math.min(1, -sky.sunElevation / 0.25)), camera.position);
       water.update(dt);
     }
     world.update(player.position.x, player.position.z);
