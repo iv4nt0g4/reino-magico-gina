@@ -63,6 +63,66 @@ export class Sounds {
     });
   }
 
+  // Voz sintetizada: un tono que va de `from` a `to` (pasando por `mid` si
+  // se da), con vibrato o temblor opcionales, filtrado y con envolvente suave.
+  #voice({ wave = 'sine', from, mid, to, dur, vibrato, tremolo, filter, gain, delay = 0 }, volume) {
+    const ctx = this.ctx;
+    const t = ctx.currentTime + delay;
+    const osc = ctx.createOscillator();
+    osc.type = wave;
+    osc.frequency.setValueAtTime(from, t);
+    if (mid) osc.frequency.linearRampToValueAtTime(mid, t + dur * 0.4);
+    osc.frequency.linearRampToValueAtTime(to, t + dur);
+    let node = osc;
+    if (vibrato) {
+      const lfo = ctx.createOscillator();
+      const depth = ctx.createGain();
+      lfo.frequency.value = vibrato.rate;
+      depth.gain.value = vibrato.depth;
+      lfo.connect(depth).connect(osc.frequency);
+      lfo.start(t);
+      lfo.stop(t + dur + 0.05);
+    }
+    if (filter) {
+      const f = ctx.createBiquadFilter();
+      f.type = filter.type ?? 'lowpass';
+      f.frequency.value = filter.freq;
+      f.Q.value = filter.q ?? 1;
+      node = node.connect(f);
+    }
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.exponentialRampToValueAtTime(gain * volume, t + Math.min(0.04, dur / 4));
+    env.gain.setValueAtTime(gain * volume, t + dur * 0.7);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    if (tremolo) {
+      const lfo = ctx.createOscillator();
+      const depth = ctx.createGain();
+      lfo.frequency.value = tremolo;
+      depth.gain.value = gain * volume * 0.5;
+      lfo.connect(depth).connect(env.gain);
+      lfo.start(t);
+      lfo.stop(t + dur + 0.05);
+    }
+    node.connect(env).connect(this.master);
+    osc.start(t);
+    osc.stop(t + dur + 0.05);
+  }
+
+  // Sonido tierno de cada animalito.
+  animal(kind, volume = 1) {
+    if (!this.ctx || this.ctx.state !== 'running' || volume <= 0.02) return;
+    const voices = {
+      conejo: [{ from: 1700, to: 2300, dur: 0.07, gain: 0.08 }, { from: 1800, to: 2400, dur: 0.07, gain: 0.08, delay: 0.1 }],
+      oveja: [{ wave: 'sawtooth', from: 400, to: 360, dur: 0.6, vibrato: { rate: 7, depth: 25 }, filter: { freq: 1300 }, gain: 0.12 }],
+      pato: [0, 0.2].map((delay) => ({ wave: 'square', from: 560, to: 420, dur: 0.15, filter: { type: 'bandpass', freq: 950, q: 3 }, gain: 0.18, delay })),
+      gato: [{ wave: 'triangle', from: 520, mid: 900, to: 600, dur: 0.5, filter: { freq: 2200 }, gain: 0.14 }],
+      poni: [{ wave: 'sawtooth', from: 760, to: 520, dur: 0.7, vibrato: { rate: 10, depth: 70 }, filter: { freq: 1600 }, gain: 0.07 }],
+      capibara: [{ from: 620, to: 700, dur: 0.35, tremolo: 18, gain: 0.16 }, { from: 680, to: 760, dur: 0.25, tremolo: 18, gain: 0.12, delay: 0.38 }],
+    };
+    for (const v of voices[kind] ?? []) this.#voice(v, volume);
+  }
+
   // Silbidito de un cohete que sube (muy suave).
   whistle(volume = 1) {
     if (!this.ctx || this.ctx.state !== 'running' || volume <= 0.02) return;

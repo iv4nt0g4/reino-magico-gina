@@ -40,9 +40,8 @@ export class Sparkles {
     this.live = [];
   }
 
-  // Lluvia de chispas desde (x, y, z).
-  burst(x, y, z, count = 14) {
-    const kinds = Object.keys(this.textures);
+  // Lluvia de chispas desde (x, y, z). `kinds`: qué dibujos usar (todos por defecto).
+  burst(x, y, z, count = 14, kinds = Object.keys(this.textures)) {
     for (let i = 0; i < count; i++) {
       if (this.live.length >= MAX) this.#remove(this.live[0]);
       const material = new THREE.SpriteMaterial({ map: this.textures[kinds[i % kinds.length]], transparent: true, depthWrite: false });

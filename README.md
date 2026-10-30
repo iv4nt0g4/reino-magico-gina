@@ -84,6 +84,26 @@ guiñando, dormido y con flor) colgados en las casas, en la habitación de Gina,
 la juguetería, y en el catálogo (pestaña ✨) para colocarlos donde se quiera. El nombre se cambia en
 `src/config/gina.js` (`amiguito.nombre`).
 
+## Animalitos y Capi (fase 7)
+
+Por todo el mundo aparecen animalitos amistosos (`src/entities/animals.js`), siempre cerca de Gina
+(como mucho 12 a la vez) y cada uno en su sitio: **conejos** que van dando saltitos y **ponis** con
+crin de colores por las praderas, **ovejas** de lana pastel, **patos** que nadan en el agua y
+caminan balanceándose por la orilla, **capibaras** junto al lago y **gatitos** por las calles de la
+ciudad, que siguen un poquito a Gina. Pasean, giran la cabeza para mirarla y, si se acerca, dan un
+saltito, sueltan corazones y hacen su sonido (sintetizado). Nunca hacen daño.
+
+**Capi** (`src/entities/companion.js`) es el compañero de Gina: un capibara con una mandarina en la
+cabeza y su nombre encima. La sigue a todas partes, más deprisa cuanto más lejos está, nada con
+ella, se sienta a su lado cuando ella se para y la saluda con corazones al reencontrarse. Si Gina
+vuela muy lejos o Capi se queda atascado, aparece junto a ella con una lluvia de estrellas. El
+animal y el nombre se cambian en `src/config/gina.js` (`companero`).
+
+Todos comparten la misma física sencilla (`src/entities/creature.js`): suben escalones de un bloque
+de un saltito, no se tiran por precipicios y se mueven en pasos pequeños para no atravesar el suelo
+aunque el juego vaya lento. Los modelos se montan con cajas y texturas pixel art dibujadas en canvas
+(`src/entities/models.js`).
+
 ## La Aldea de las Siete Estrellas
 
 Al sur de la ciudad, siguiendo el camino de farolillos que sale de la Calle de la Luna, está el
