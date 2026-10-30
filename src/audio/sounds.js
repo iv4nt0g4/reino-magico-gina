@@ -63,6 +63,56 @@ export class Sounds {
     });
   }
 
+  // Silbidito de un cohete que sube (muy suave).
+  whistle(volume = 1) {
+    if (!this.ctx || this.ctx.state !== 'running' || volume <= 0.02) return;
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(500, t);
+    osc.frequency.exponentialRampToValueAtTime(1400, t + 1);
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.exponentialRampToValueAtTime(0.04 * volume, t + 0.1);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+    osc.connect(env).connect(this.master);
+    osc.start(t);
+    osc.stop(t + 1.2);
+  }
+
+  // Estallido suave de un fuego artificial: un "pum" grave y amortiguado y
+  // unos tintineos agudos, como chispitas.
+  pop(volume = 1) {
+    if (!this.ctx || this.ctx.state !== 'running' || volume <= 0.02) return;
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = this.noise;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 380;
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.exponentialRampToValueAtTime(0.35 * volume, t + 0.02);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+    src.connect(filter).connect(env).connect(this.master);
+    src.start(t, Math.random() * 0.3, 0.8);
+    for (let i = 0; i < 4; i++) {
+      const tt = t + 0.15 + i * 0.09 + Math.random() * 0.05;
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = 1800 + Math.random() * 1600;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, tt);
+      g.gain.exponentialRampToValueAtTime(0.03 * volume, tt + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.25);
+      osc.connect(g).connect(this.master);
+      osc.start(tt);
+      osc.stop(tt + 0.3);
+    }
+  }
+
   // Reproduce el sonido de un material ('stone', 'wood'...) para una acción.
   play(material, action, intensity = 1) {
     if (!this.ctx || this.ctx.state !== 'running') return;

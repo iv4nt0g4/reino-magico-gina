@@ -57,6 +57,22 @@ plantilla por edificio o zona: castillo, casas y tiendas (`house.js`), ayuntamie
 Carrusel, estación, casa de Gina, granja del molino y objetos de ambiente (`props.js`). El plano
 de la ciudad y las zonas reservadas para la fase 6 están en `city.js`.
 
+## Las zonas mágicas (fase 6)
+
+Alrededor de la ciudad, y construidas con ella al crear un mundo nuevo:
+
+- **🎡 Feria** (al este, al final de la Avenida del Castillo): noria con cabinas de colores, montaña
+  rusa, taza giratoria, casetas con premios y banderines. `?pos=60,11`
+- **🌳 Bosque Encantado** (al oeste): árboles rosas y morados, setas gigantes, la casita de los siete
+  enanitos, la cabaña de jengibre y una mina de gemas. `?pos=-60,11`
+- **❄️ Palacio de Hielo** (noroeste): colina nevada con escalinata y palacio de cristal celeste con
+  torres, trono helado y galería. `?pos=-50,-65`
+- **🏴‍☠️ Bahía del Pirata** (noreste): lago con barco pirata, faro de rayas que se puede subir, muelle
+  e islita con el cofre del tesoro. `?pos=60,-55`
+- **🧚 Jardín de las Hadas** (suroeste): laberinto de setos con glorieta, estanque, casitas-seta y
+  nubes flotantes con escalones de nube y puente arcoíris. `?pos=-62,88`
+- **🎆 Fuegos artificiales** sobre el castillo cada noche.
+
 ## Brotis, el amiguito verde
 
 Brotis (`src/entities/brotis.js`) es un amiguito original: verde claro moteado, con ojos grandes y

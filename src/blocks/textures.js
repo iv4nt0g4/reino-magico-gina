@@ -327,6 +327,19 @@ Object.assign(PAINTERS, {
     const highlight = Math.hypot(x - 4, y - 4) < 1.6;
     return highlight ? [255, 244, 200] : shade(glow, (rand(x, y, 91) - 0.5) * 0.05);
   },
+  // Hojas moradas del Bosque Encantado, con alguna florecita lila.
+  purple_leaves: (x, y) => {
+    if (rand(x, y, 93) < 0.17) return null;
+    if (rand(x, y, 94) < 0.08) return [236, 200, 255];
+    return shade([150, 92, 200], (rand(x, y, 95) - 0.5) * 0.35);
+  },
+  // Cristal celeste del Palacio de Hielo: facetas en diagonal con brillos.
+  crystal_sky: (x, y) => {
+    const facet = ((x + y) >> 2) % 2 === 0;
+    const sparkle = (x * 5 + y * 3) % 17 === 0;
+    if (sparkle) return [255, 255, 255];
+    return shade(facet ? [170, 226, 252] : [130, 200, 244], (rand(x, y, 96) - 0.5) * 0.06);
+  },
   // Pelo dorado que brilla: mechones verticales de amarillo intenso.
   golden_hair: (x, y) => {
     const streak = (x + Math.floor(y / 5)) % 4 === 0;

@@ -181,6 +181,10 @@ const DEFINITIONS = [
   { name: 'dragon_scales', label: 'Escamas de dragón', faces: all('dragon_scales'), sound: 'stone', category: 'magic' },
   { name: 'star_orb', label: 'Esfera de estrella', faces: all('star_orb'), light: 13, sound: 'glass', category: 'magic' },
   { name: 'golden_hair', label: 'Luz dorada', faces: all('golden_hair'), light: 12, sound: 'wool', category: 'magic' },
+
+  // --- Fase 6 ---
+  { name: 'purple_leaves', label: 'Hojas moradas', faces: all('purple_leaves'), opaque: false, cutout: true, lightOpacity: 1, sound: 'grass' },
+  { name: 'crystal_sky', label: 'Cristal celeste', faces: all('crystal_sky'), light: 7, sound: 'glass', category: 'magic' },
 ];
 
 // Lista de texturas, en orden de aparición: el índice es la capa del DataArrayTexture.
