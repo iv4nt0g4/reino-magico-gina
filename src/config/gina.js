@@ -11,5 +11,7 @@ export const GINA = {
   familia: [],
   // Guiños de la familia en el mundo:
   maestroDelDojo: 'Iván', // el dojo de la Aldea de las Siete Estrellas lleva su nombre
+  // El amiguito verde que pasea por el reino (Gina puede ponerle otro nombre).
+  amiguito: { nombre: 'Brotis' },
   cumpleanos: null, // formato 'MM-DD'
 };

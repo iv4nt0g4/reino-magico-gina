@@ -10,6 +10,8 @@ import { Input } from './engine/input.js';
 import { Interaction } from './engine/interaction.js';
 import { Sky } from './engine/sky.js';
 import { Player } from './entities/player.js';
+import { BrotisManager } from './entities/brotis.js';
+import { Sparkles } from './entities/sparkles.js';
 import { WaterSimulation } from './world/water.js';
 import { Storage, SAVE_VERSION } from './world/storage.js';
 import { buildCity, CITY_SPAWN } from './structures/city.js';
@@ -54,6 +56,8 @@ const sounds = new Sounds(SETTINGS.volume);
 const hotbar = new Hotbar();
 const catalog = new Catalog(hotbar);
 const interaction = new Interaction({ scene, camera, world, water, player, hotbar, sounds, settings: SETTINGS });
+const sparkles = new Sparkles(scene);
+const brotis = new BrotisManager(scene, world, sounds);
 
 // Calidad automática (resolución y distancia de visión según los fps).
 const quality = new QualityManager(renderer, (distance) => {
@@ -84,7 +88,7 @@ if (newWorld) {
 }
 
 // Acceso desde la consola del navegador para depurar (solo en `npm run dev`).
-if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality };
+if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis };
 
 // Estados: loading → paused ⇄ playing ⇄ catalog
 let state = 'loading';
@@ -280,6 +284,8 @@ function frame(now) {
       if (steps === MAX_STEPS) accumulator = 0;
       playPlayerSounds();
       sky.advance(dt);
+      brotis.update(dt, player.position, materials.uniforms.uDaylight.value, sparkles);
+      sparkles.update(dt);
       water.update(dt);
     }
     world.update(player.position.x, player.position.z);

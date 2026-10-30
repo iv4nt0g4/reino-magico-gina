@@ -3,6 +3,7 @@
 // así siempre salen iguales y no hace falta ningún archivo de imagen.
 
 import { TEXTURE_NAMES, WOOL_COLORS, PASTEL_COLORS, TILE_COLORS } from './registry.js';
+import { face, painting, skin, PAINTING_EXPRESSIONS } from './brotis.js';
 
 export const TEXTURE_SIZE = 16;
 
@@ -292,6 +293,13 @@ Object.assign(PAINTERS, {
     return edge ? [60, 52, 70] : shade([84, 74, 96], (rand(x, y, 70) - 0.5) * 0.1);
   },
 });
+
+// Brotis: cuadros (bloques) y las texturas de su cuerpo (para el bichito).
+for (const e of PAINTING_EXPRESSIONS) PAINTERS[`cuadro_brotis_${e}`] = painting(e);
+for (const e of ['feliz', 'alegre', 'dormido']) PAINTERS[`brotis_cara_${e}`] = face(e);
+PAINTERS.brotis_piel = (x, y) => skin(x, y, 81);
+PAINTERS.brotis_pie = (x, y) => skin(x, y, 82).map((v) => v * 0.78);
+PAINTERS.brotis_hoja = (x, y) => (Math.abs(x - 7.5) < 1 ? [90, 160, 70] : [150, 226, 96]);
 
 for (const c of WOOL_COLORS) PAINTERS[`wool_${c.key}`] = wool(c.rgb, 50);
 for (const c of PASTEL_COLORS) PAINTERS[`pastel_${c.key}`] = pastel(c.rgb, 51);

@@ -8,6 +8,7 @@
 // aparece en el camino, delante del puente, mirando al castillo.
 
 import { CITY_LEVEL } from '../world/terrain.js';
+import { paintingAt } from './frame.js';
 
 const G = CITY_LEVEL; // altura del suelo (bloque de hierba)
 const F = G + 1; // primera altura libre sobre el suelo
@@ -270,6 +271,7 @@ function buildUpperFloor(b) {
     b.set(-10, y + 1, z, flower);
   }
   b.set(-4, y + 4, -35, 'lantern');
+  b.set(-10, y + 2, -38, paintingAt(-10, -38)); // cuadro de Brotis junto a la cama
   b.set(-7, y + 4, -33, 'lantern');
 
   // Balcón con vistas al patio y a la puerta.
@@ -318,4 +320,6 @@ function buildPlayroom(b) {
   b.fillBox(-2, floor + 1, -44, 2, floor + 5, -44, 'rainbow');
   for (const [x, z] of [[-6, -34], [6, -40], [0, -37], [-6, -40], [6, -32]]) b.set(x, G - 2, z, 'lantern');
   b.set(0, G - 2, -43, 'star');
+  // Cuadros de Brotis por las paredes.
+  for (const [x, z] of [[-6, -43], [6, -43], [10, -37], [-10, -34]]) b.set(x, floor + 3, z, paintingAt(x, z));
 }

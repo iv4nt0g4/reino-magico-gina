@@ -57,4 +57,7 @@ export function ginaHouse(f, rng, { width, depth }) {
   f.set(u1 - 1, y + 1, v0 + 3, 'gold');
   f.set(door, y + 3, v0 + 4, 'star');
   f.pattern(door - 2, y + 3, v1, ['.p.p.', 'ppppp', '.ppp.', '..p..'], { p: 'wool_pink' });
+  // Su colección de cuadros de Brotis, a los lados del corazón.
+  for (const du of [-4, 4]) f.painting(door + du, y + 2, v1 - 1);
+  f.painting(u0 + 1, y + 2, v0 + 3);
 }
