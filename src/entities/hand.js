@@ -7,7 +7,8 @@
 
 import * as THREE from 'three';
 import { BLOCKS } from '../blocks/registry.js';
-import { paintTexture, TEXTURE_SIZE } from '../blocks/textures.js';
+import { TEXTURE_SIZE } from '../blocks/textures.js';
+import { blockMesh, allMaterials } from '../blocks/blockMesh.js';
 
 const SWING_TIME = 0.25; // segundos que dura el golpecito
 const SWITCH_TIME = 0.22; // segundos que dura bajar y subir al cambiar de bloque
@@ -28,9 +29,6 @@ function canvasTexture(draw) {
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
 }
-
-const blockTexture = (name) =>
-  canvasTexture((ctx) => ctx.putImageData(new ImageData(paintTexture(name), TEXTURE_SIZE, TEXTURE_SIZE), 0, 0));
 
 // Brazo: piel con un poco de grano y una manga rosa en la parte de arriba.
 function armTexture() {
@@ -61,6 +59,7 @@ export class Hand {
     this.root.add(this.pivot);
     this.materials = []; // para oscurecerlos de noche
     this.cache = new Map(); // id de bloque → malla
+    this.blockMaterials = new Map(); // id de bloque → materiales
 
     // Brazo: sale de la esquina inferior derecha hacia delante y un poco hacia
     // el centro; la mano queda justo debajo del bloque que sujeta.
@@ -88,28 +87,9 @@ export class Hand {
   // Malla de un bloque para sujetarlo (cubo con sus texturas, o plano para flores y antorchas).
   #meshFor(id) {
     if (this.cache.has(id)) return this.cache.get(id);
-    const block = BLOCKS[id];
-    let mesh;
-    if (block.shape === 'cross') {
-      const material = new THREE.MeshBasicMaterial({ map: blockTexture(block.textures[0]), alphaTest: 0.5, side: THREE.DoubleSide });
-      this.materials.push(material);
-      mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.24), material);
-      mesh.rotation.y = -0.4;
-    } else {
-      // Mismo orden de caras en BoxGeometry y en el registro: +x, -x, +y, -y, +z, -z.
-      const materials = block.textures.map((name) => {
-        const m = new THREE.MeshBasicMaterial({
-          map: blockTexture(name),
-          transparent: block.liquidLevel >= 0,
-          opacity: block.liquidLevel >= 0 ? 0.75 : 1,
-          alphaTest: block.cutout ? 0.5 : 0,
-        });
-        this.materials.push(m);
-        return m;
-      });
-      mesh = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), materials);
-      mesh.rotation.set(0.25, 0.8, 0);
-    }
+    const mesh = blockMesh(id, 0.16, this.blockMaterials);
+    if (BLOCKS[id].shape === 'cross') mesh.rotation.y = -0.4;
+    else mesh.rotation.set(0.25, 0.8, 0);
     this.cache.set(id, mesh);
     return mesh;
   }
@@ -163,7 +143,9 @@ export class Hand {
 
     this.root.position.set(bobX, bobY - dip, 0);
     this.pivot.rotation.set(-swing * 0.35, swing * 0.45, 0); // hacia delante y hacia el centro
-    for (const m of this.materials) m.color.setScalar(Math.max(0.4, light));
+    const l = Math.max(0.4, light);
+    for (const m of this.materials) m.color.setScalar(l);
+    for (const m of allMaterials(this.blockMaterials)) m.color.setScalar(l);
   }
 
   render(renderer) {

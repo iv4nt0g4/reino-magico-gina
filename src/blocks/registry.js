@@ -90,6 +90,8 @@ const column = (side, top, bottom = top) => [side, side, top, bottom, side, side
 //   replaceable: se puede colocar otro bloque encima de su hueco (hierba alta, agua)
 //   needsSupport: desaparece si se rompe el bloque de debajo (plantas, antorcha)
 //   liquidLevel: en el agua, 0 = fuente y 1–3 = agua que fluye (más baja cuanto más lejos)
+//   hardness:  segundos que se tarda en romperlo en la Aventura suave (0 = al instante)
+//   drop:      lo que se recoge al romperlo (por defecto, el propio bloque; 0 = nada)
 const DEFINITIONS = [
   { name: 'air', label: 'Aire', solid: false, opaque: false, category: null },
 
@@ -187,6 +189,10 @@ const DEFINITIONS = [
   { name: 'crystal_sky', label: 'Cristal celeste', faces: all('crystal_sky'), light: 7, sound: 'glass', category: 'magic' },
 ];
 
+// Segundos para romper un bloque en la Aventura suave, según su material
+// (más cortos que en el original: es para una niña de 7 años).
+const HARDNESS = { grass: 0.6, gravel: 0.6, sand: 0.5, snow: 0.35, wood: 0.9, stone: 1.2, glass: 0.4, wool: 0.45, water: 0 };
+
 // Lista de texturas, en orden de aparición: el índice es la capa del DataArrayTexture.
 export const TEXTURE_NAMES = [...new Set(DEFINITIONS.flatMap((d) => d.faces ?? []))];
 const TEX = Object.fromEntries(TEXTURE_NAMES.map((name, i) => [name, i]));
@@ -206,6 +212,8 @@ export const BLOCKS = DEFINITIONS.map((def, id) => ({
   replaceable: false,
   needsSupport: false,
   liquidLevel: -1,
+  hardness: def.shape === 'cross' ? 0 : def.cutout && def.sound === 'grass' ? 0.25 : HARDNESS[def.sound ?? 'stone'] ?? 1,
+  drop: id,
   ...def,
   textures: def.faces ?? null, // nombres de textura por cara
   faces: def.faces ? def.faces.map((t) => TEX[t]) : null, // capas por cara
@@ -213,6 +221,12 @@ export const BLOCKS = DEFINITIONS.map((def, id) => ({
 
 // Ids por nombre: BLOCK.stone, BLOCK.grass...
 export const BLOCK = Object.fromEntries(BLOCKS.map((b) => [b.name, b.id]));
+
+// Lo que se recoge al romper (como en el original, la hierba deja tierra).
+BLOCKS[BLOCK.grass].drop = BLOCK.dirt;
+BLOCKS[BLOCK.snowy_grass].drop = BLOCK.dirt;
+BLOCKS[BLOCK.tall_grass].drop = 0;
+for (const b of BLOCKS) if (b.shape === 'liquid') b.drop = 0;
 
 // Tablas planas para consultas rápidas en bucles calientes (mallado, física).
 export const IS_SOLID = Uint8Array.from(BLOCKS, (b) => (b.solid ? 1 : 0));

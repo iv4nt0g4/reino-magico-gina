@@ -15,6 +15,12 @@ export class Hud {
     this.debug = document.getElementById('debug');
     this.underwater = document.getElementById('underwater');
     this.saved = document.getElementById('saved');
+    this.toastEl = document.getElementById('toast');
+    this.flash = document.getElementById('sparkle-flash');
+    this.modeButtons = {
+      creative: document.getElementById('mode-creative'),
+      adventure: document.getElementById('mode-adventure'),
+    };
 
     this.title.textContent = GINA.tituloJuego;
     document.title = GINA.tituloJuego;
@@ -64,6 +70,33 @@ export class Hud {
   // Tinte azul al tener la cabeza bajo el agua.
   setUnderwater(underwater) {
     this.underwater.hidden = !underwater;
+  }
+
+  // Botones de modo (Creativo / Aventura) en la pausa.
+  onModeChange(callback) {
+    for (const [mode, button] of Object.entries(this.modeButtons)) button.addEventListener('click', () => callback(mode));
+  }
+
+  setMode(mode) {
+    for (const [key, button] of Object.entries(this.modeButtons)) button.classList.toggle('active', key === mode);
+  }
+
+  // Mensaje corto y alegre en el centro de la pantalla.
+  toast(text) {
+    this.toastEl.textContent = text;
+    this.toastEl.classList.add('visible');
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => this.toastEl.classList.remove('visible'), 2200);
+  }
+
+  // Destello de estrellitas al reaparecer.
+  sparkle() {
+    this.flash.hidden = false;
+    this.flash.classList.remove('go');
+    void this.flash.offsetWidth; // reinicia la animación
+    this.flash.classList.add('go');
+    clearTimeout(this.flashTimer);
+    this.flashTimer = setTimeout(() => (this.flash.hidden = true), 1600);
   }
 
   // Disquete un momento en la esquina al guardar.

@@ -16,6 +16,8 @@ import { Hand } from './entities/hand.js';
 import { Fireworks } from './entities/fireworks.js';
 import { AnimalManager } from './entities/animals.js';
 import { Companion } from './entities/companion.js';
+import { Drops } from './entities/drops.js';
+import { Inventory } from './entities/inventory.js';
 import { WaterSimulation } from './world/water.js';
 import { Storage, SAVE_VERSION } from './world/storage.js';
 import { buildCity, CITY_SPAWN } from './structures/city.js';
@@ -23,8 +25,9 @@ import { Sounds } from './audio/sounds.js';
 import { Hud } from './ui/hud.js';
 import { Hotbar } from './ui/hotbar.js';
 import { Catalog } from './ui/catalog.js';
+import { InventoryScreen } from './ui/inventoryScreen.js';
 import { CHUNK_SIZE } from './engine/constants.js';
-import { BLOCKS } from './blocks/registry.js';
+import { BLOCK, BLOCKS, WOOL_COLORS } from './blocks/registry.js';
 
 const PHYSICS_DT = 1 / 60; // paso fijo de física
 const MAX_STEPS = 5; // evita la "espiral de la muerte" si el juego va lento
@@ -66,6 +69,10 @@ const hand = new Hand();
 const fireworks = new Fireworks(scene, sounds);
 const animals = new AnimalManager(scene, world, sounds);
 const companion = new Companion(scene, sounds);
+const drops = new Drops(scene, sounds);
+const backpack = new Inventory(36); // inventario de la Aventura suave (barra rápida + mochila)
+let mode = 'creative'; // 'creative' o 'adventure' (se aplica con setMode)
+const inventoryScreen = new InventoryScreen(hotbar, sounds);
 interaction.onAction = () => hand.swing();
 
 // Calidad automática (resolución y distancia de visión según los fps).
@@ -85,6 +92,9 @@ if (meta) {
   hotbar.restore(meta.hotbar, meta.selected);
   sky.time = meta.time;
 }
+// Inventario de aventura guardado o, la primera vez, un regalito de bienvenida.
+if (meta?.adventure) backpack.restore(meta.adventure, (id) => id > 0 && !!BLOCKS[id]);
+else backpack.add(BLOCK.torch, 8);
 
 // Mundo nuevo: construir el reino una sola vez y guardarlo enseguida.
 if (newWorld) {
@@ -97,10 +107,13 @@ if (newWorld) {
 }
 
 // Acceso desde la consola del navegador para depurar (solo en `npm run dev`).
-if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand, fireworks, animals, companion, materials };
+if (import.meta.env.DEV) {
+  window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand, fireworks, animals, companion, materials, drops, backpack, inventoryScreen, setMode, respawn };
+}
 
-// Estados: loading → paused ⇄ playing ⇄ catalog
+// Estados: loading → paused ⇄ playing ⇄ catalog (catálogo o inventario)
 let state = 'loading';
+setMode(meta?.mode === 'adventure' ? 'adventure' : 'creative');
 let accumulator = 0;
 let lastTime = performance.now();
 let fps = 0, fpsFrames = 0, fpsTime = 0;
@@ -134,8 +147,10 @@ async function writeSave() {
     version: SAVE_VERSION,
     seed: SETTINGS.seed,
     player: { x: p.x, y: p.y, z: p.z, yaw: player.yaw, pitch: player.pitch, flying: player.flying },
-    hotbar: hotbar.slots,
+    hotbar: hotbar.creative.slots.map((s) => s?.id ?? 0),
     selected: hotbar.selected,
+    mode,
+    adventure: backpack.toJSON(),
     time: sky.time,
     savedAt: Date.now(),
   });
@@ -169,7 +184,9 @@ input.onMouseDown = (button) => {
 input.onOpenCatalog = () => {
   setState('catalog');
   input.releaseLock();
-  catalog.open();
+  // En creativo, el catálogo de todos los bloques; en aventura, el inventario con el crafteo.
+  if (mode === 'adventure') inventoryScreen.open(backpack);
+  else catalog.open();
 };
 const fullscreenButton = document.getElementById('fullscreen');
 fullscreenButton.hidden = !document.fullscreenEnabled;
@@ -192,10 +209,80 @@ input.onLockChange = (locked) => {
   if (locked) setState('playing');
   else if (state !== 'catalog') setState('paused');
 };
-catalog.onClose = (relock) => {
+catalog.onClose = inventoryScreen.onClose = (relock) => {
   if (relock) play();
   else setState('paused');
 };
+// Lo que no cabe en la mochila al cerrar el inventario cae delante de Gina.
+inventoryScreen.onDrop = (id, count) => {
+  const p = player.position;
+  drops.spawn(id, count, p.x - Math.sin(player.yaw), p.y + 1.2, p.z - Math.cos(player.yaw));
+};
+
+// ---- Modos de juego: Creativo y Aventura suave ----
+function setMode(next, announce = false) {
+  mode = next;
+  const adventure = mode === 'adventure';
+  interaction.adventure = adventure;
+  player.canFly = !adventure;
+  if (adventure && player.flying) {
+    player.flying = false;
+    player.fallStart = null; // bajar de volar al cambiar de modo no cuenta como caída
+  }
+  hotbar.setInventory(adventure ? backpack : hotbar.creative);
+  hud.setMode(mode);
+  if (announce) {
+    hud.toast(adventure ? '🎒 ¡Aventura!' : '🎨 ¡Creativo!');
+    sounds.magic(0.8);
+  }
+}
+hud.onModeChange((next) => {
+  if (next === mode) return;
+  setMode(next, true);
+  saveGame();
+});
+
+// Al romper en aventura, sale el bloque pequeñito para recogerlo.
+interaction.onBreak = (x, y, z, id) => {
+  if (mode === 'adventure') drops.spawn(BLOCKS[id].drop, 1, x + 0.5, y + 0.5, z + 0.5);
+};
+
+// Caricias (clic derecho sobre un animalito, Capi o un Brotis): corazones y
+// su sonido. En aventura, las ovejas regalan un poco de lana de su color.
+interaction.creatures = () => [...animals.list, ...brotis.list, ...(companion.placed ? [companion] : [])];
+interaction.onPet = (c) => {
+  const head = c.sp?.headY ?? c.height;
+  sparkles.burst(c.position.x, c.position.y + head + 0.3, c.position.z, 7, ['corazon']);
+  if (c.kind) sounds.animal(c.kind, 1);
+  else sounds.chirp();
+  if (c.onGround) c.vy = 4; // saltito de alegría
+  if (mode === 'adventure' && c.kind === 'oveja' && !(c.woolAt > performance.now())) {
+    c.woolAt = performance.now() + SETTINGS.woolEverySeconds * 1000;
+    drops.spawn(woolFor(c.color), 1, c.position.x, c.position.y + 1, c.position.z, player.position);
+  }
+};
+
+// Lana del color más parecido al de la oveja.
+function woolFor(rgb) {
+  let best = WOOL_COLORS[0], bestDist = Infinity;
+  for (const w of WOOL_COLORS) {
+    const d = (w.rgb[0] - rgb[0]) ** 2 + (w.rgb[1] - rgb[1]) ** 2 + (w.rgb[2] - rgb[2]) ** 2;
+    if (d < bestDist) [best, bestDist] = [w, d];
+  }
+  return BLOCK[`wool_${best.key}`];
+}
+
+// Tras una caída muy grande (aventura) o al caer fuera del mundo: reaparece
+// en la puerta del castillo con una lluvia de estrellitas. No pierde nada.
+function respawn() {
+  player.spawnAt(CITY_SPAWN.x, CITY_SPAWN.y, CITY_SPAWN.z);
+  player.yaw = CITY_SPAWN.yaw;
+  player.pitch = 0;
+  hud.sparkle();
+  hud.toast('✨ ¡Upsi! ✨');
+  sounds.magic();
+  sparkles.burst(CITY_SPAWN.x, CITY_SPAWN.y + 1.5, CITY_SPAWN.z, 20, ['estrella']);
+}
 hotbar.onSlotClick = (i) => hotbar.select(i);
 
 // Pedir confirmación antes de cerrar la pestaña (Ctrl+W está muy cerca de
@@ -249,6 +336,10 @@ function updateLoading() {
 function playPlayerSounds() {
   for (const e of player.events) {
     if (e.type === 'splash') sounds.play('water', 'splash', Math.min(1.5, e.speed / 10));
+    if (e.type === 'bigFall' && mode === 'adventure') {
+      respawn();
+      break;
+    }
     if (!e.block) continue;
     const material = BLOCKS[e.block].sound;
     if (e.type === 'step') sounds.play(material, 'step', e.quiet ? 0.4 : 1);
@@ -295,11 +386,13 @@ function frame(now) {
       }
       if (steps === MAX_STEPS) accumulator = 0;
       playPlayerSounds();
+      if (player.position.y < -20) respawn(); // por si cae por debajo del mundo
       sky.advance(dt);
       const daylight = materials.uniforms.uDaylight.value;
       brotis.update(dt, player.position, daylight, sparkles);
       animals.update(dt, player.position, daylight, sparkles);
       companion.update(dt, world, player, daylight, sparkles);
+      drops.update(dt, world, player, mode === 'adventure' ? backpack : null, daylight);
       sparkles.update(dt);
       fireworks.update(dt, Math.max(0, Math.min(1, -sky.sunElevation / 0.25)), camera.position);
       water.update(dt);
@@ -326,7 +419,7 @@ function frame(now) {
   materials.uniforms.uHeldPos.value.copy(camera.position);
 
   // Bloque apuntado, romper y colocar (después de mover la cámara).
-  if (state === 'playing') interaction.update(input.buttons, now);
+  if (state === 'playing') interaction.update(input.buttons, now, dt);
   world.flushEdits();
 
   sky.update(player.headInWater);
