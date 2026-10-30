@@ -4,6 +4,9 @@
 // Orden de caras usado en todo el motor:
 //   0: +X (este)  1: -X (oeste)  2: +Y (arriba)  3: -Y (abajo)  4: +Z (sur)  5: -Z (norte)
 
+import { GINA } from '../config/gina.js';
+import { PAINTING_EXPRESSIONS } from './brotis.js';
+
 // Colores compartidos por las familias de bloques de colores (lana, tejas, piedra pastel).
 export const WOOL_COLORS = [
   { key: 'white', label: 'blanca', rgb: [238, 238, 238] },
@@ -164,6 +167,15 @@ const DEFINITIONS = [
 
   // --- Fase 4 ---
   { name: 'bookshelf', label: 'Estantería', faces: column('bookshelf', 'planks'), sound: 'wood', category: 'building' },
+
+  // --- Cuadros de Brotis, el amiguito verde ---
+  ...PAINTING_EXPRESSIONS.map((e) => ({
+    name: `cuadro_brotis_${e}`,
+    label: `Cuadro de ${GINA.amiguito.nombre}`,
+    faces: column(`cuadro_brotis_${e}`, 'planks'),
+    sound: 'wood',
+    category: 'magic',
+  })),
 ];
 
 // Lista de texturas, en orden de aparición: el índice es la capa del DataArrayTexture.

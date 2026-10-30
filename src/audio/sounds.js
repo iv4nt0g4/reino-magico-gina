@@ -42,6 +42,27 @@ export class Sounds {
     for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1;
   }
 
+  // "Pío" tierno de Brotis: dos notitas que suben, como un pajarito.
+  chirp() {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const ctx = this.ctx;
+    const base = 900 + Math.random() * 300;
+    [0, 0.13].forEach((delay, i) => {
+      const t = ctx.currentTime + delay;
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(base * (1 + i * 0.25), t);
+      osc.frequency.exponentialRampToValueAtTime(base * (1.5 + i * 0.3), t + 0.09);
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0.0001, t);
+      env.gain.exponentialRampToValueAtTime(0.25, t + 0.015);
+      env.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      osc.connect(env).connect(this.master);
+      osc.start(t);
+      osc.stop(t + 0.14);
+    });
+  }
+
   // Reproduce el sonido de un material ('stone', 'wood'...) para una acción.
   play(material, action, intensity = 1) {
     if (!this.ctx || this.ctx.state !== 'running') return;

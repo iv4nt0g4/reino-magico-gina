@@ -13,6 +13,13 @@
 // se desplaza en vertical para quedar apoyado en él.
 
 import { CITY_LEVEL } from '../world/terrain.js';
+import { PAINTING_EXPRESSIONS } from '../blocks/brotis.js';
+
+// Cuadro de Brotis para una posición: siempre el mismo en el mismo sitio.
+export function paintingAt(x, z) {
+  const k = Math.abs(Math.imul(x, 73856093) ^ Math.imul(z, 19349663)) % PAINTING_EXPRESSIONS.length;
+  return `cuadro_brotis_${PAINTING_EXPRESSIONS[k]}`;
+}
 
 // Ejes de cada orientación (hacia dónde queda la calle).
 const AXES = {
@@ -121,6 +128,13 @@ export class Frame {
     const [x, z] = this.world(u - du, v);
     const [x1, z1] = this.world(u, v);
     this.b.stairways.push({ name, x, y: y + this.dy, z, dx: x1 - x, dz: z1 - z, rise: steps });
+  }
+
+  // Cuadro de Brotis colgado en (u, y, v). La expresión depende del sitio
+  // (no del generador aleatorio), para que las casas no cambien al añadirlos.
+  painting(u, y, v) {
+    const [x, z] = this.world(u, v);
+    this.b.set(x, y + this.dy, z, paintingAt(x, z));
   }
 
   // Puerta (hueco de 1 × 2) en la fachada en (u, v). Se registra para las pruebas.

@@ -57,6 +57,17 @@ plantilla por edificio o zona: castillo, casas y tiendas (`house.js`), ayuntamie
 Carrusel, estación, casa de Gina, granja del molino y objetos de ambiente (`props.js`). El plano
 de la ciudad y las zonas reservadas para la fase 6 están en `city.js`.
 
+## Brotis, el amiguito verde
+
+Brotis (`src/entities/brotis.js`) es un amiguito original: verde claro moteado, con ojos grandes y
+brillantes, mofletes rosas, sonrisa y un brote de dos hojas en la cabeza. Aparecen sobre la hierba
+cerca de Gina (como mucho 8 a la vez), pasean, la miran cuando se acerca y se quedan a su lado; si
+está muy cerca dan un saltito de alegría, ponen cara feliz (^ ^), sueltan flores, estrellas y
+corazones y hacen un "pío". Nunca hacen daño. Además hay cuatro **cuadros de Brotis** (contento,
+guiñando, dormido y con flor) colgados en las casas, en la habitación de Gina, en el castillo y en
+la juguetería, y en el catálogo (pestaña ✨) para colocarlos donde se quiera. El nombre se cambia en
+`src/config/gina.js` (`amiguito.nombre`).
+
 ## La Aldea de las Siete Estrellas
 
 Al sur de la ciudad, siguiendo el camino de farolillos que sale de la Calle de la Luna, está el

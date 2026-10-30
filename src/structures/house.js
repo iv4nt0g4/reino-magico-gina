@@ -133,6 +133,7 @@ function furnishGround(f, rng, c) {
     f.set(ui1, F, vi1, 'wool_white');
     f.set(ui1, F, vi1 - 1, bed);
     f.fill(ui0, F, vi1, ui0, F + 1, vi1, 'bookshelf');
+    f.painting(ui0, F + 2, vi1); // cuadro de Brotis encima de la estantería
   }
 }
 
@@ -146,6 +147,7 @@ function furnishUpper(f, rng, c) {
   f.fill(ui0, y, vi0, ui0, y + 1, vi0, 'planks');
   f.set(door, y + 3, vi0 + 2, 'lantern');
   if (rng.chance(0.5)) f.fill(ui0, y, vi0 + 2, ui0, y + 1, vi0 + 2, 'bookshelf');
+  f.painting(ui0, y + 2, vi0 + 1); // cuadro de Brotis en la pared
 }
 
 // Jardín delantero: camino hasta la puerta, flores, jardineras y algún detalle.
@@ -269,7 +271,7 @@ const ICON_PALETTE = {
 const GOODS = {
   heladeria: ['wool_pink', 'wool_white', 'wool_brown', 'wool_lime', 'wool_light_blue'],
   pasteleria: ['cookie', 'candy', 'wool_pink', 'wool_white'],
-  jugueteria: ['wool_red', 'wool_blue', 'rainbow', 'wool_yellow', 'cloud'],
+  jugueteria: ['wool_red', 'cuadro_brotis_feliz', 'rainbow', 'cuadro_brotis_guino', 'cloud', 'cuadro_brotis_flor'],
   floristeria: FLOWERS,
   disfraces: ['wool_purple', 'gold', 'wool_magenta', 'wool_light_blue'],
   libreria: ['bookshelf', 'bookshelf', 'planks'],
