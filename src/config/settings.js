@@ -49,6 +49,7 @@ export const SETTINGS = {
 
   // Sonido
   volume: 0.6,
+  musicVolume: 0.35, // música de fondo (relativa al volumen general)
   stepDistance: 1.7, // bloques recorridos entre dos pasos
 
   // Aventura suave

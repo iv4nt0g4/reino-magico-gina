@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
     <title>El Reino Mágico de Gina</title>
   </head>
-  <body>
+  <body class="paused">
     <div id="game"></div>
 
     <div id="underwater" hidden></div>
@@ -17,6 +17,7 @@
     <div id="hotbar"></div>
 
     <div id="toast"></div>
+    <div id="confetti" hidden></div>
     <div id="sparkle-flash" hidden></div>
 
     <div id="inventory" hidden>
@@ -53,14 +54,21 @@
     </div>
 
     <div id="overlay">
+      <div id="title-stars"></div>
       <div class="panel">
+        <div id="crown">👑</div>
         <h1 id="title"></h1>
+        <div id="subtitle"></div>
         <div id="loading">
           <div class="bar"><div id="loading-bar"></div></div>
         </div>
         <div id="loading-label"></div>
         <button id="play" hidden>▶ Jugar</button>
         <button id="fullscreen" title="Pantalla completa">⛶</button>
+        <div id="options">
+          <div id="themes" title="Colores"></div>
+          <button id="music-toggle" title="Música">🎵</button>
+        </div>
         <div id="modes">
           <button id="mode-creative" class="mode" title="Creativo: todos los bloques, volar">🎨 Creativo</button>
           <button id="mode-adventure" class="mode" title="Aventura: recoger, craftear y construir">🎒 Aventura</button>

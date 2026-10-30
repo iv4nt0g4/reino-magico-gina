@@ -18,7 +18,7 @@ const SIT_AFTER = 3; // segundos quieto antes de sentarse
 const COLOR = [156, 108, 68];
 
 // Cartelito con el nombre, para ponerlo encima de la cabeza.
-function nameTag(name) {
+export function nameTag(name) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   const font = 'bold 44px "Trebuchet MS", sans-serif';

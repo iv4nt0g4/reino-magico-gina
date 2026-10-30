@@ -129,6 +129,28 @@ En la Aventura suave:
 Ajustes en `src/config/settings.js` (`safeFallHeight`, `woolEverySeconds`) y dureza de cada bloque en
 `src/blocks/registry.js` (`hardness`, `drop`).
 
+## Personalización (fase 9)
+
+Todo lo de Gina está en `src/config/gina.js`: nombre, color favorito, mascota, familia, tiendas con
+nombres de la familia y cumpleaños.
+- **Pantalla de título** con las letras dando saltitos, corona, estrellitas que suben y la cámara
+  girando despacio alrededor del castillo antes de empezar.
+- **Temas de color** (`src/ui/theme.js`): rosa (su favorito, por defecto), morado, celeste y verde.
+  Se eligen con los puntos de colores de la pausa y se recuerdan en el dispositivo.
+- **Mensajes** con su nombre (`src/ui/messages.js`): bienvenida, buenas noches con fuegos artificiales,
+  buenos días y ánimos de vez en cuando al construir o fabricar.
+- **Carteles** de madera (`src/entities/signs.js`): bienvenida delante del castillo, "Aquí viven
+  Gina, Mamá Yessica, Iván y Sky" en su casa, la Pastelería de Yessica y la Juguetería de Iván, y
+  postes con flechas hacia cada zona del reino. Son decoración, así que salen también en partidas ya
+  empezadas.
+- **Sky**, su conejo (`src/entities/pet.js`): vive en el jardín de su casa con su nombre encima y va a
+  saludarla cuando llega.
+- **Sorpresa de cumpleaños** (`src/entities/birthday.js`): ese día, tarta gigante de tres pisos con
+  una vela por año en la Plaza del Carrusel, confeti sin parar, "Cumpleaños feliz" al acercarse y
+  confeti por la pantalla. Para verla cualquier día: añadir `?cumple` a la dirección.
+- **Música** (`src/audio/music.js`): cajita de música sintetizada que nunca se repite igual; de noche
+  va más despacio y más grave. Se apaga y enciende con 🎵 en la pausa.
+
 ## Cuevas y linterna mágica
 
 Bajo tierra nunca está negro del todo: queda una penumbra suave para que Gina vea por dónde va

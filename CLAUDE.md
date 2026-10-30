@@ -54,15 +54,15 @@ Zonas (todas con diseños originales):
 
 Por la noche: farolas encendidas, ventanas iluminadas y **fuegos artificiales sobre el castillo** (partículas de colores) cada noche.
 
-## Sobre Gina (rellenar antes de la fase de personalización)
+## Sobre Gina (los datos de verdad están en `src/config/gina.js`)
 - Nombre: Gina
 - Edad: 7 años
-- Color favorito: [COMPLETAR]
-- Animal favorito: [COMPLETAR]
-- Mascota (nombre y tipo, si tiene): [COMPLETAR]
-- Cosas que le encantan: [COMPLETAR]
-- Nombres de la familia para carteles o NPCs: [COMPLETAR]
-- Fecha de cumpleaños (para una sorpresa ese día): [COMPLETAR]
+- Color favorito: rosa
+- Animal favorito: el capibara (compañero "Capi"; también le encanta Lilo y Stitch, pero es de Disney y no se usa)
+- Mascota: Sky, un conejo
+- Cosas que le encantan: capibaras, los creepers (en el juego, "Brotis", diseño original), Dragon Ball con Iván
+- Familia para carteles: Mamá Yessica e Iván (su padrastro)
+- Fecha de cumpleaños: sin poner todavía (`cumpleanos` en `gina.js`; se puede ver la sorpresa con `?cumple`)
 
 Usos previstos: pantalla de título "El Reino Mágico de Gina", mensaje de bienvenida con su nombre, su color favorito como tema de la interfaz, su animal favorito como compañero que la sigue, carteles en la ciudad con nombres de la familia, y una fiesta especial (confeti y tarta gigante en la plaza) el día de su cumpleaños.
 

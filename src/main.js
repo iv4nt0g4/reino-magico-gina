@@ -18,6 +18,13 @@ import { AnimalManager } from './entities/animals.js';
 import { Companion } from './entities/companion.js';
 import { Drops } from './entities/drops.js';
 import { Inventory } from './entities/inventory.js';
+import { Signs } from './entities/signs.js';
+import { Pet } from './entities/pet.js';
+import { Birthday } from './entities/birthday.js';
+import { Music } from './audio/music.js';
+import { Messages } from './ui/messages.js';
+import { applyTheme, savedTheme, themePicker } from './ui/theme.js';
+import { isBirthday } from './config/gina.js';
 import { WaterSimulation } from './world/water.js';
 import { Storage, SAVE_VERSION } from './world/storage.js';
 import { buildCity, CITY_SPAWN } from './structures/city.js';
@@ -33,7 +40,9 @@ const PHYSICS_DT = 1 / 60; // paso fijo de física
 const MAX_STEPS = 5; // evita la "espiral de la muerte" si el juego va lento
 const LOADING_RADIUS = 2; // chunks que deben verse antes de poder jugar
 
+applyTheme(savedTheme()); // el color favorito de Gina (o el elegido en la pausa)
 const hud = new Hud();
+const birthday = isBirthday();
 
 // ---- Partida guardada ----
 const storage = await Storage.open();
@@ -72,6 +81,13 @@ const companion = new Companion(scene, sounds);
 const drops = new Drops(scene, sounds);
 const backpack = new Inventory(36); // inventario de la Aventura suave (barra rápida + mochila)
 let mode = 'creative'; // 'creative' o 'adventure' (se aplica con setMode)
+const music = new Music(sounds, SETTINGS.musicVolume);
+const signs = new Signs(scene);
+const pet = new Pet(scene, sounds);
+const party = birthday ? new Birthday(scene, music, sounds, hud) : null;
+const messages = new Messages(hud);
+let titleSpin = 0; // en la pantalla de título la cámara gira despacito
+let started = false;
 const inventoryScreen = new InventoryScreen(hotbar, sounds);
 interaction.onAction = () => hand.swing();
 
@@ -108,7 +124,7 @@ if (newWorld) {
 
 // Acceso desde la consola del navegador para depurar (solo en `npm run dev`).
 if (import.meta.env.DEV) {
-  window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand, fireworks, animals, companion, materials, drops, backpack, inventoryScreen, setMode, respawn };
+  window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand, fireworks, animals, companion, materials, drops, backpack, inventoryScreen, setMode, respawn, signs, pet, party, music, messages };
 }
 
 // Estados: loading → paused ⇄ playing ⇄ catalog (catálogo o inventario)
@@ -127,10 +143,17 @@ function setState(next) {
     quality.reset();
   }
   if (next === 'paused' && previous === 'playing') saveGame();
+  if (next === 'playing' && !started) {
+    started = true;
+    titleSpin = 0;
+    messages.welcome({ night: sky.sunElevation < -0.1, birthday });
+    if (birthday) hud.confetti();
+  }
 }
 
 function play() {
   sounds.unlock();
+  music.start();
   input.requestLock().catch(() => setState('paused'));
 }
 
@@ -249,7 +272,27 @@ interaction.onBreak = (x, y, z, id) => {
 
 // Caricias (clic derecho sobre un animalito, Capi o un Brotis): corazones y
 // su sonido. En aventura, las ovejas regalan un poco de lana de su color.
-interaction.creatures = () => [...animals.list, ...brotis.list, ...(companion.placed ? [companion] : [])];
+interaction.creatures = () => [...animals.list, ...brotis.list, ...(companion.placed ? [companion] : []), ...(pet.shown ? [pet] : [])];
+interaction.onPlace = () => messages.placedBlock();
+inventoryScreen.onCraft = () => messages.crafted();
+
+// Opciones de la pausa: colores y música (se recuerdan en este dispositivo).
+themePicker(document.getElementById('themes'));
+let musicOn = true;
+try {
+  musicOn = localStorage.getItem('reino-gina-musica') !== 'no';
+} catch {
+  // sin almacenamiento: con música
+}
+music.setEnabled(musicOn);
+hud.onMusicToggle(musicOn, (on) => {
+  music.setEnabled(on);
+  try {
+    localStorage.setItem('reino-gina-musica', on ? 'si' : 'no');
+  } catch {
+    // no se recordará
+  }
+});
 interaction.onPet = (c) => {
   const head = c.sp?.headY ?? c.height;
   sparkles.burst(c.position.x, c.position.y + head + 0.3, c.position.z, 7, ['corazon']);
@@ -393,6 +436,11 @@ function frame(now) {
       animals.update(dt, player.position, daylight, sparkles);
       companion.update(dt, world, player, daylight, sparkles);
       drops.update(dt, world, player, mode === 'adventure' ? backpack : null, daylight);
+      pet.update(dt, world, player.position, daylight, sparkles);
+      party?.update(dt, player, daylight, sparkles);
+      signs.update(player, daylight);
+      messages.daylight(sky.sunElevation);
+      music.night = Math.max(0, Math.min(1, -sky.sunElevation / 0.2));
       sparkles.update(dt);
       fireworks.update(dt, Math.max(0, Math.min(1, -sky.sunElevation / 0.25)), camera.position);
       water.update(dt);
@@ -403,7 +451,8 @@ function frame(now) {
   // Cámara
   const eye = player.eyePosition(state === 'playing' ? accumulator / PHYSICS_DT : 1);
   camera.position.set(eye.x, eye.y, eye.z);
-  camera.rotation.set(player.pitch, player.yaw, 0);
+  if (!started && state === 'paused') titleSpin += dt * 0.05;
+  camera.rotation.set(player.pitch, player.yaw + titleSpin, 0);
   const targetFov = SETTINGS.fov + (player.sprinting ? SETTINGS.sprintFovBoost : 0);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov += (targetFov - camera.fov) * (1 - Math.exp(-10 * dt));
