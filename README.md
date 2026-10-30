@@ -104,6 +104,13 @@ de un saltito, no se tiran por precipicios y se mueven en pasos pequeños para n
 aunque el juego vaya lento. Los modelos se montan con cajas y texturas pixel art dibujadas en canvas
 (`src/entities/models.js`).
 
+## Cuevas y linterna mágica
+
+Bajo tierra nunca está negro del todo: queda una penumbra suave para que Gina vea por dónde va
+(`caveLight` en `src/config/settings.js`). Y si lleva en la mano un bloque que brilla (antorcha,
+farolillo, piedra con brillo, estrella…), ilumina a su alrededor mientras camina, como una linterna
+mágica; al cambiar de bloque la luz se apaga poco a poco.
+
 ## La Aldea de las Siete Estrellas
 
 Al sur de la ciudad, siguiendo el camino de farolillos que sale de la Calle de la Luna, está el

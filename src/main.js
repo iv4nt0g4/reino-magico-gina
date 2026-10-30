@@ -50,7 +50,7 @@ const [SPAWN_X, SPAWN_Z] = urlPos
 
 // ---- Motor ----
 const { renderer, scene, camera, viewDistance } = createRenderer(document.getElementById('game'), SETTINGS);
-const materials = createBlockMaterials();
+const materials = createBlockMaterials(SETTINGS);
 const world = new ChunkManager(scene, materials, SETTINGS, storage);
 const water = new WaterSimulation(world);
 const sky = new Sky(scene, camera, materials.uniforms, SETTINGS, viewDistance);
@@ -97,7 +97,7 @@ if (newWorld) {
 }
 
 // Acceso desde la consola del navegador para depurar (solo en `npm run dev`).
-if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand, fireworks, animals, companion };
+if (import.meta.env.DEV) window.__juego = { player, world, water, sky, hotbar, interaction, sounds, storage, quality, brotis, hand, fireworks, animals, companion, materials };
 
 // Estados: loading → paused ⇄ playing ⇄ catalog
 let state = 'loading';
@@ -318,6 +318,13 @@ function frame(now) {
   }
   camera.updateMatrixWorld();
 
+  // Linterna mágica: el bloque de la mano, si brilla, ilumina alrededor de Gina
+  // (se enciende y se apaga poco a poco).
+  const heldLight = materials.uniforms.uHeldLevel;
+  const heldTarget = BLOCKS[hotbar.selectedBlock()]?.light ?? 0;
+  heldLight.value += (heldTarget - heldLight.value) * (1 - Math.exp(-SETTINGS.heldLightFade * dt));
+  materials.uniforms.uHeldPos.value.copy(camera.position);
+
   // Bloque apuntado, romper y colocar (después de mover la cámara).
   if (state === 'playing') interaction.update(input.buttons, now);
   world.flushEdits();
@@ -327,7 +334,8 @@ function frame(now) {
   renderer.render(scene, camera);
   if (state !== 'loading') {
     const v = player.velocity;
-    hand.update(dt, hotbar.selectedBlock(), Math.hypot(v.x, v.z), player.onGround, materials.uniforms.uDaylight.value);
+    const handLight = Math.max(materials.uniforms.uDaylight.value, heldLight.value / 15);
+    hand.update(dt, hotbar.selectedBlock(), Math.hypot(v.x, v.z), player.onGround, handLight);
     hand.render(renderer);
   }
 

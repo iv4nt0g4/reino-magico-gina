@@ -55,6 +55,8 @@ export const SETTINGS = {
   dayLengthSeconds: 20 * 60, // un día completo
   startTime: 0.04, // hora al crear un mundo (0 = amanecer, 0,25 = mediodía, 0,5 = atardecer)
   nightDaylight: 0.22, // cuánta luz de cielo queda de noche (no se pone negro del todo)
+  caveLight: 0.2, // brillo mínimo en cuevas y pozos: penumbra, nunca negro del todo
+  heldLightFade: 6, // rapidez con que se enciende/apaga la luz del bloque en la mano
 
   // Guardado
   autosaveSeconds: 30,
