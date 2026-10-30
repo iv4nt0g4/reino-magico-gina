@@ -46,6 +46,11 @@ export class Music {
     this.timer = setInterval(() => this.#schedule(), 120);
   }
 
+  setVolume(volume) {
+    this.volume = volume;
+    this.setEnabled(this.enabled);
+  }
+
   setEnabled(enabled) {
     this.enabled = enabled;
     if (!this.out) return;

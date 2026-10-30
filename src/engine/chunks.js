@@ -34,6 +34,7 @@ export class ChunkManager {
     this.dirty = new Map(); // clave → urgente (true) | normal: pendientes de re-mallar
     this.jobs = 0;
     this.center = { cx: NaN, cz: NaN };
+    this.settled = false; // todo lo cercano está cargado y mallado: no hace falta revisar
     // Se generan datos un anillo más allá de lo que se dibuja, porque una
     // malla necesita a sus 8 vecinos (para los bordes y para la luz).
     this.offsets = spiralOffsets(settings.renderDistance + 1);
@@ -49,6 +50,7 @@ export class ChunkManager {
     this.settings.renderDistance = distance;
     this.offsets = spiralOffsets(distance + 1);
     this.center = { cx: NaN, cz: NaN }; // fuerza a revisar qué descargar
+    this.settled = false;
   }
 
   // ---- Consulta de bloques (coordenadas de mundo) ----
@@ -108,6 +110,7 @@ export class ChunkManager {
       const chunk = this.chunks.get(key);
       if (!chunk?.blocks) continue;
       chunk.needsMesh = true;
+      this.settled = false;
       if (chunk.mesh || chunk.waterMesh || urgent) {
         if (this.#neighborsReady(chunk.cx, chunk.cz)) this.#buildMesh(chunk, true);
       }
@@ -142,21 +145,34 @@ export class ChunkManager {
     const cz = Math.floor(playerZ / CHUNK_SIZE);
     if (cx !== this.center.cx || cz !== this.center.cz) {
       this.center = { cx, cz };
+      this.settled = false;
       this.#unloadFar();
     }
+    // Optimización: si en la última vuelta no quedaba nada por hacer, no se
+    // recorren otra vez los cientos de chunks cercanos hasta que algo cambie.
+    if (this.settled) return;
+    let pending = false;
 
     const maxJobs = this.settings.maxChunkJobs;
     const meshRadius = this.settings.renderDistance;
     for (const { dx, dz, d } of this.offsets) {
-      if (this.jobs >= maxJobs) break;
+      if (this.jobs >= maxJobs) {
+        pending = true;
+        break;
+      }
       const x = cx + dx;
       const z = cz + dz;
       const chunk = this.getChunk(x, z);
-      if (!chunk) this.#load(x, z);
-      else if (d <= meshRadius && chunk.blocks && chunk.needsMesh && !chunk.meshing && this.#neighborsReady(x, z)) {
-        this.#buildMesh(chunk);
+      if (!chunk) {
+        this.#load(x, z);
+        pending = true;
+      } else if (d <= meshRadius && chunk.blocks && chunk.needsMesh && !chunk.meshing) {
+        pending = true;
+        if (this.#neighborsReady(x, z)) this.#buildMesh(chunk);
       }
     }
+    // Las cargas y mallados en marcha avisan al terminar (ponen settled = false).
+    if (!pending) this.settled = true;
   }
 
   // Trae los bloques de un chunk: de memoria, del guardado o generándolo.
@@ -167,6 +183,7 @@ export class ChunkManager {
     const ready = (blocks) => {
       if (this.getChunk(cx, cz) !== chunk) return; // se descargó mientras tanto
       chunk.blocks = blocks;
+      this.settled = false;
     };
 
     if (this.edited.has(key)) {
@@ -211,6 +228,7 @@ export class ChunkManager {
     this.jobs++;
     this.pool.run({ type: 'mesh', chunks }, [], urgent).then(({ mesh }) => {
       this.jobs--;
+      this.settled = false;
       if (version === chunk.version) chunk.meshing = false;
       // Descartar si se descargó o si ya hay un mallado más reciente en camino.
       if (this.getChunk(chunk.cx, chunk.cz) !== chunk || version !== chunk.version) return;

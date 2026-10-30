@@ -27,17 +27,29 @@ export class QualityManager {
     this.time = 0;
     this.goodWindows = 0;
     this.cooldown = 0;
+    this.fixedDistance = null; // elegida en los ajustes (null = automática)
+    this.appliedDistance = null;
   }
 
   get distance() {
-    return LEVELS[this.level].distance;
+    return this.fixedDistance ?? LEVELS[this.level].distance;
+  }
+
+  // Distancia de visión fija (o null para que se ajuste sola). La resolución
+  // interna se sigue ajustando sola en los dos casos.
+  setFixedDistance(distance) {
+    this.fixedDistance = distance;
+    this.apply();
   }
 
   // Aplica el nivel actual (al empezar y cada vez que cambia).
   apply() {
-    const { distance, pixelRatio } = LEVELS[this.level];
+    const { pixelRatio } = LEVELS[this.level];
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, pixelRatio));
-    this.onDistance(distance);
+    if (this.distance !== this.appliedDistance) {
+      this.appliedDistance = this.distance;
+      this.onDistance(this.distance);
+    }
   }
 
   // Llamar en cada fotograma mientras se juega.

@@ -28,6 +28,11 @@ export class Sounds {
     this.ctx = null;
   }
 
+  setVolume(volume) {
+    this.volume = volume;
+    if (this.master) this.master.gain.setTargetAtTime(volume, this.ctx.currentTime, 0.05);
+  }
+
   // El navegador solo deja crear audio tras un gesto de la jugadora (clic en Jugar).
   unlock() {
     if (this.ctx) return this.ctx.resume();

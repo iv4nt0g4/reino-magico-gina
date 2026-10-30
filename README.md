@@ -38,6 +38,14 @@ El juego está pensado para una tablet Android con teclado y ratón (Chrome):
   se oculta) y con las flechas del teclado. Con F3 se ve "sin captura de ratón" cuando pasa.
 - La calidad se ajusta sola según los fps (resolución interna y distancia de visión, de 3 a 7
   chunks) y se recuerda para la próxima vez. Con F3 se ve la distancia actual.
+- **⚙️ Ajustes** (en la pausa, `src/ui/settingsMenu.js`): distancia de visión (auto o fija de 3 a
+  7), sensibilidad del ratón, campo de visión, volumen, música y controles táctiles. Se guardan en
+  el dispositivo; ↺ los deja como al principio.
+- **Controles táctiles** (`src/ui/touch.js`), para el móvil o la tablet sin ratón: joystick en la
+  mitad izquierda (al fondo hacia delante, corre), arrastrar en el resto para mirar y botones para
+  saltar/subir ⤴️, agacharse/bajar ⬇️, romper ⛏️ (mantener), colocar 🧱, volar 🕊️ (creativo),
+  inventario 🎒 y pausa ⏸️. Los huecos de la barra rápida se tocan para elegirlos. En "Auto"
+  aparecen al tocar la pantalla y se esconden al mover un ratón; también se pueden forzar.
 
 ## Partida guardada
 
